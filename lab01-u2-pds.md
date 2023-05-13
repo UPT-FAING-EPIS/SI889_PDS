@@ -249,24 +249,77 @@ namespace Bank.Domain
     }
 }
 ```
-2. Ahora proceder a crear las implementaciones de la clase abstracta anterior para cada producto, crear lo siguientes archivos en el proyecto Bank.Domain:
-> PlatinumFactory.cs
+2. Ahora proceder a crear las implementaciones de la clase abstracta anterior para cada producto, crear los siguientes archivos en el proyecto Bank.Domain:
+> MoneyBackFactoryMethod.cs
+```C#
+namespace Bank.Domain
+{
+    public class MoneyBackFactoryMethod : CreditCardFactoryMethod
+    {
+        protected override ICreditCard MakeProduct()
+        {
+            ICreditCard product = new MoneyBack();
+            return product;
+        }
+    }
+}
+```
+> PlatinumFactoryMethod.cs
+```C#
+namespace Bank.Domain
+{
+    public class PlatinumFactoryMethod: CreditCardFactoryMethod
+    {
+        protected override ICreditCard MakeProduct()
+        {
+            ICreditCard product = new Platinum();
+            return product;
+        }
+    }
+}
+```
+> TitaniumFactoryMethod.cs
+```C#
+namespace Bank.Domain
+{
+    public class TitaniumFactoryMethod : CreditCardFactoryMethod
+    {
+        protected override ICreditCard MakeProduct()
+        {
+            ICreditCard product = new Titanium();
+            return product;
+        }
+    }
+}
+```
+3. Para probar esta implementacón, modificar la clase de pruebas CreditCardTests y adicionar los siguientes métodos:
 ```C#
         [Test]
-        public void Debit_WhenAmountIsLessThanZero_ShouldThrowArgumentOutOfRange()
+        public void GivenCreditTypePlatinumChoosen_WhenRequestCreditCard_ThenNewValidCreditCard()
         {
-            // Arrange
-            double beginningBalance = 11.99;
-            double debitAmount = -100.00;
-            BankAccount account = new BankAccount("Mr. Bryan Walton", beginningBalance);
-            // Act and assert
-            Assert.Throws<System.ArgumentOutOfRangeException>(() => account.Debit(debitAmount));
+            ICreditCard creditCard = new PlatinumFactoryMethod().CreateProduct();
+            Assert.IsNotNull(creditCard);
+            Assert.IsNotEmpty(creditCard.GetCardType());
+            Assert.GreaterOrEqual(creditCard.GetCreditLimit(), 0);
+            Assert.GreaterOrEqual(creditCard.GetAnnualCharge(), 0);
+        }
+
+        [Test]
+        public void GivenCreditTypeTitaniumChoosen_WhenRequestCreditCard_ThenNewValidCreditCard()
+        {
+            ICreditCard creditCard = new TitaniumFactoryMethod().CreateProduct();
+            Assert.IsNotNull(creditCard);
+            Assert.IsNotEmpty(creditCard.GetCardType());
+            Assert.AreEqual(creditCard.GetCardType(),"Titanium Edge");
+            Assert.GreaterOrEqual(creditCard.GetCreditLimit(), 0);
+            Assert.GreaterOrEqual(creditCard.GetAnnualCharge(), 0);
         }
 ```
-13. Ejecutar nuevamente el paso 8 para lo cual se obtendra una respuesta similar a la siguiente:
+4. Ejecutar nuevamente el paso 9 (Parte I) para lo cual se obtendra una respuesta similar a la siguiente:
+```Bash
+Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 9 ms
 ```
-Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 9 ms
-```
+
 14. Ahora es tiempo de mejorar el código y refactorizar, para lo cual modificar la clase BankAccount de la siguiente manera:
 ```C#
 using System;
