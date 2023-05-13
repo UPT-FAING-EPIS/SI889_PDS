@@ -41,43 +41,15 @@ dotnet add ./Bank.Domain.Tests/Bank.Domain.Tests.csproj reference ./Bank.Domain/
 ```
 5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Bank.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. En VS Code, en el proyecto Bank.Domain proceder a crear el archivo BankAccount.cs e introducir el siguiente código:
+6. En VS Code, en el proyecto Bank.Domain proceder a crear el archivo ICreditCard.cs e introducir el siguiente código:
 ```C#
 namespace Bank.Domain
 {
-    public class BankAccount
+    public interface ICreditCard
     {
-        private readonly string m_customerName;
-        private double m_balance;
-        private BankAccount() { }
-        public BankAccount(string customerName, double balance)
-        {
-            m_customerName = customerName;
-            m_balance = balance;
-        }
-        public string CustomerName { get { return m_customerName; } }
-        public double Balance { get { return m_balance; }  }
-        public void Debit(double amount)
-        {
-            if (amount > m_balance)
-                throw new ArgumentOutOfRangeException("amount");
-            if (amount < 0)
-                throw new ArgumentOutOfRangeException("amount");
-            m_balance += amount; // intentionally incorrect code
-        }
-        public void Credit(double amount)
-        {
-            if (amount < 0)
-                throw new ArgumentOutOfRangeException("amount");
-            m_balance += amount;
-        }
-        public static void Main()
-        {
-            BankAccount ba = new BankAccount("Mr. Bryan Walton", 11.99);
-            ba.Credit(5.77);
-            ba.Debit(11.22);
-            Console.WriteLine("Current balance is ${0}", ba.Balance);
-        }
+        string GetCardType();
+        int GetCreditLimit();
+        int GetAnnualCharge();
     }
 }
 ```
