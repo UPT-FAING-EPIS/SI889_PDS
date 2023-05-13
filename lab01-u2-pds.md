@@ -53,6 +53,70 @@ namespace Bank.Domain
     }
 }
 ```
+6. En el proyecto Bank.Domain proceder a crear las implementaciones de a interfaz creada en el paso previo para eso añadimos los archivos:
+> MoneyBack.cs
+```C#
+namespace Bank.Domain
+{
+    public class MoneyBack : ICreditCard
+    {
+        public string GetCardType()
+        {
+            return "MoneyBack";
+        }
+        public int GetCreditLimit()
+        {
+            return 15000;
+        }
+        public int GetAnnualCharge()
+        {
+            return 500;
+        }
+    }
+}
+```
+> Platinum.cs
+```C#
+namespace Bank.Domain
+{
+    public class Platinum : ICreditCard
+    {
+        public string GetCardType()
+        {
+            return "Platinum Plus";
+        }
+        public int GetCreditLimit()
+        {
+            return 35000;
+        }
+        public int GetAnnualCharge()
+        {
+            return 2000;
+        }
+    }
+}
+```
+> Titanium.cs
+```C#
+namespace Bank.Domain
+{
+    public class Titanium : ICreditCard
+    {
+        public string GetCardType()
+        {
+            return "Titanium Edge";
+        }
+        public int GetCreditLimit()
+        {
+            return 25000;
+        }
+        public int GetAnnualCharge()
+        {
+            return 1500;
+        }
+    }
+}
+```
 7. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo BanckAccountTests.cs e introducir el siguiente código:
 ```C#
 using Bank.Domain;
