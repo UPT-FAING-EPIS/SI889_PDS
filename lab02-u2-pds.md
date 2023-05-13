@@ -46,12 +46,15 @@ dotnet add ./Notifications.Domain.Tests/Notifications.Domain.Tests.csproj refere
 ```
 5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Notifications.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. En VS Code, en el proyecto Notifications.Domain proceder a crear el archivo ICreditCard.cs e introducir el siguiente código:
+6. En VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs e introducir el siguiente código:
 ```C#
+namespace Notifications.Domain
+{
     public interface IMessageSender
     {
         void SendMessage(string Message);
     }
+}
 ```
 7. En el proyecto Bank.Domain proceder a crear las implementaciones de a interfaz creada en el paso previo para eso añadimos los archivos:
 > MoneyBack.cs
