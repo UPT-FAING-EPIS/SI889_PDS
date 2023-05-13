@@ -319,75 +319,10 @@ namespace Bank.Domain
 ```Bash
 Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 9 ms
 ```
+5. Finalmente podemos confirmar con este patròn un desacoplamiento de la clase que lo ejecuta, asimismo la reglas de creación ya no dependen de las clausula IF-ELSE, por lo que para crear un nuevo tipo de tarjeta solo será necesario crear una nueva clase basada en la clase abstracta de CreditCardFactoryMethod:
 
-14. Ahora es tiempo de mejorar el código y refactorizar, para lo cual modificar la clase BankAccount de la siguiente manera:
-```C#
-using System;
-namespace Bank.Domain
-{
-    public class BankAccount
-    {
-        public const string DebitAmountExceedsBalanceMessage = "Debit amount exceeds balance";
-        public const string DebitAmountLessThanZeroMessage = "Debit amount is less than zero";
-        private readonly string m_customerName;
-        private double m_balance;
-        private BankAccount() { }
-        public BankAccount(string customerName, double balance)
-        {
-            m_customerName = customerName;
-            m_balance = balance;
-        }
-        public string CustomerName { get { return m_customerName; } }
-        public double Balance { get { return m_balance; }  }
-        public void Debit(double amount)
-        {
-            if (amount > m_balance)
-                throw new ArgumentOutOfRangeException("amount", amount, DebitAmountExceedsBalanceMessage);
-            if (amount < 0)
-                throw new ArgumentOutOfRangeException("amount", amount, DebitAmountLessThanZeroMessage);
-            m_balance -= amount; 
-        }
-        public void Credit(double amount)
-        {
-            if (amount < 0)
-                throw new ArgumentOutOfRangeException("amount");
-            m_balance += amount;
-        }
-    }
-}
-```
-15. Adicionar el siguiente método de prueba en la clase BankAccountTests, que permitira verificar si el monto de retiro es mayor al saldo de la cuenta.
-```C#
-        [Test]
-        public void Debit_WhenAmountIsMoreThanBalance_ShouldThrowArgumentOutOfRange()
-        {
-            // Arrange
-            double beginningBalance = 11.99;
-            double debitAmount = 20.0;
-            BankAccount account = new BankAccount("Mr. Bryan Walton", beginningBalance);
-            // Act
-            try
-            {
-                account.Debit(debitAmount);
-            }
-            catch (System.ArgumentOutOfRangeException e)
-            {
-                // Assert
-                StringAssert.Contains(BankAccount.DebitAmountExceedsBalanceMessage, e.Message);
-            }
-        }
-```
-16. Volver a ejecutar el paso 8 y verificar el resultado, debería ser similar a lo siguiente
-```
-Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 12 ms
-```
-17. Finalmente proceder a verificar la cobertura, dentro del proyecto Primes.Tests se dede haber generado una carpeta o directorio TestResults, en el cual posiblemente exista otra subpcarpeta o subdirectorio conteniendo un archivo con nombre `coverage.cobertura.xml`, si existe ese archivo proceder a ejecutar los siguientes comandos desde la linea de comandos abierta anteriomente, de los contrario revisar el paso 8:
-```
-dotnet tool install -g dotnet-reportgenerator-globaltool
-ReportGenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:HTML
-```
-18. El comando anterior primero proceda instalar una herramienta llamada ReportGenerator (https://reportgenerator.io/) la cual mediante la segunda parte del comando permitira generar un reporte en formato HTML con la cobertura obtenida de la ejecución de las pruebas. Este reporte debe localizarse dentro de una carpeta llamada Cobertura y puede acceder a el abriendo con un navegador de internet el archivo index.htm.
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bbad4ef3-4f18-4db3-85c0-c7f4f28e5ef0)
 
 ---
 ## Actividades Encargadas
-1. Adicionar los escenarios, casos de prueba, metodos de prueba y modificaciones para verificar el método de crédito.
+1. Crear un nuevo proyecto de dominio y su respectivo proyecto de pruebas utilizando otro patrón de diseño CREACIONAL.
