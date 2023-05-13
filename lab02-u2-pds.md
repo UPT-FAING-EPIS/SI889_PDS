@@ -34,7 +34,7 @@ dotnet new sln -o Notifications
 ```
 3. Acceder a la solución creada y ejecutar el siguiente comando para crear una nueva libreria de clases y adicionarla a la solución actual.
 ```
-cd Bank
+cd Notifications
 dotnet new classlib -o Notifications.Domain
 dotnet sln add ./Notifications.Domain/Notifications.Domain.csproj
 ```
