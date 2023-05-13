@@ -58,7 +58,7 @@ namespace Bank.Domain
     }
 }
 ```
-6. En el proyecto Bank.Domain proceder a crear las implementaciones de a interfaz creada en el paso previo para eso añadimos los archivos:
+7. En el proyecto Bank.Domain proceder a crear las implementaciones de a interfaz creada en el paso previo para eso añadimos los archivos:
 > MoneyBack.cs
 ```C#
 namespace Bank.Domain
@@ -122,7 +122,7 @@ namespace Bank.Domain
     }
 }
 ```
-7. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo CreditCardTests.cs e introducir el siguiente código:
+8. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo CreditCardTests.cs e introducir el siguiente código:
 ```C#
 using Bank.Domain;
 using NUnit.Framework;
@@ -157,17 +157,43 @@ namespace Bank.Domain.Tests
     }
 }
 ```
-8. Abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
+9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
 ```Bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
-9. El paso anterior debe producir un error por lo que sera necesario escribir el código mecesario para que el test funcione. 
+10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
 ```Bash
-Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: < 1 ms
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 5 ms
 ```
-10. En el proyecto Bank.Domain, modificar la clase BankAccount, en la linea 21 con el siguiente contenido:
+11. Funciona pero ¿es correcta la implementación del código? ¿Qué problemas tiene esta implementación?
+* Primero tenemos un problema de Alto Acoplamiento entre la clase de prueba y las clases productos (MoneyBack, Titanium y Platinum). Asi que cuando hay un cambio en una d elas clases todas las demàs deberan ser cambiadas.
+* Segundo, si se adiciona un nuevo tipo de tarjeta de crédito, necesitamos hacer cambios en la lògica de creación que se encuentra en el metod de prueba, adicionando una nueva condición IF-ELSE lo cual no solo complica el desarrollo, sino también el proceso pruebas.
+  
+12. Para solucionar los problemas anteriores mencionados utilizaremos el patrón de diseño FABRICA, para lo cual ahora en el proyecto Bank.Domain proceder a agregar el archivo CreditCarFactory.cs con el siguiente código:
 ```C#
-       m_balance -= amount;
+namespace Bank.Domain
+{
+    public class CreditCardFactory
+    {
+        public static ICreditCard GetCreditCard(string cardType)
+        {
+            ICreditCard? cardDetails = null;
+            if (cardType == "MoneyBack")
+            {
+                cardDetails = new MoneyBack();
+            }
+            else if (cardType == "Titanium")
+            {
+                cardDetails = new Titanium();
+            }
+            else if (cardType == "Platinum")
+            {
+                cardDetails = new Platinum();
+            }
+            return cardDetails; 
+        }
+    }
+}
 ```
 11. Ejecutar nuevamente el pase 8 y ahora deberia devolver algo similar a lo siguiente:
 ```Bash
