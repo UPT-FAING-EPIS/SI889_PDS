@@ -183,7 +183,7 @@ dotnet test --collect:"XPlat Code Coverage"
 Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 5 ms
 ```
 
-### PARTE II: Factory Method Design Pattern
+### PARTE II: Facade Design Pattern
 
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/09109954-6f0f-4db3-8449-c82b4abcfa4d)
 
