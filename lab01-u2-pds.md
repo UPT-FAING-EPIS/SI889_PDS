@@ -22,6 +22,9 @@
   * Clonar el repositorio mediante git para tener los recursos necesarios
 
 ## DESARROLLO
+
+### PARTE I: Factory Method Design Pattern
+
 1. Iniciar la aplicación Powershell o Windows Terminal en modo administrador 
 2. Ejecutar el siguiente comando para crear una nueva solución
 ```
@@ -117,28 +120,37 @@ namespace Bank.Domain
     }
 }
 ```
-7. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo BanckAccountTests.cs e introducir el siguiente código:
+7. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo CreditCardTests.cs e introducir el siguiente código:
 ```C#
 using Bank.Domain;
 using NUnit.Framework;
 
 namespace Bank.Domain.Tests
 {
-    public class BankAccountTests
+    public class CreditCardTests
     {
         [Test]
-        public void Debit_WithValidAmount_UpdatesBalance()
+        public void GivenCreditTypeSelected_WhenRequestCreditCard_ThenNewValidCreditCard()
         {
-            // Arrange
-            double beginningBalance = 11.99;
-            double debitAmount = 4.55;
-            double expected = 7.44;
-            BankAccount account = new BankAccount("Mr. Bryan Walton", beginningBalance);
-            // Act
-            account.Debit(debitAmount);
-            // Assert
-            double actual = account.Balance;
-            Assert.AreEqual(expected, actual, 0.001, "Account not debited correctly");
+            string cardType = "MoneyBack";
+            ICreditCard? cardDetails = null;
+            if (cardType == "MoneyBack")
+            {
+                cardDetails = new MoneyBack();
+            }
+            else if (cardType == "Titanium")
+            {
+                cardDetails = new Titanium();
+            }
+            else if (cardType == "Platinum")
+            {
+                cardDetails = new Platinum();
+            }
+
+            Assert.IsNotNull(cardDetails);
+            Assert.IsNotEmpty(cardDetails.GetCardType());
+            Assert.GreaterOrEqual(cardDetails.GetCreditLimit(), 0);
+            Assert.GreaterOrEqual(cardDetails.GetAnnualCharge(), 0);
         }
     }
 }
