@@ -46,116 +46,56 @@ dotnet add ./Notifications.Domain.Tests/Notifications.Domain.Tests.csproj refere
 ```
 5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Notifications.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. En VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs e introducir el siguiente código:
+6. Primero se necesita implementar la interfaz que servirá de PUENTE entre la clase abstracta de mensajes y las posible implementaciones de envio. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs :
 ```C#
 namespace Notifications.Domain
 {
     public interface IMessageSender
     {
-        void SendMessage(string Message);
+        string SendMessage(string Message);
     }
 }
 ```
-7. En el proyecto Bank.Domain proceder a crear las implementaciones de a interfaz creada en el paso previo para eso añadimos los archivos:
-> MoneyBack.cs
+7. Ahora proceder a implementar las clases concretas o implementaiones a partir de la interfaz creada, Para esto en el proyecto Notifications.Domain proceder a crear los archivos siguientes:
+> SmsMessageSender.cs
 ```C#
-namespace Bank.Domain
+namespace Notifications.Domain
 {
-    public class MoneyBack : ICreditCard
+    public class SmsMessageSender : IMessageSender
     {
-        public string GetCardType()
+        public string SendMessage(string Message)
         {
-            return "MoneyBack";
-        }
-        public int GetCreditLimit()
-        {
-            return 15000;
-        }
-        public int GetAnnualCharge()
-        {
-            return 500;
+            return "'" + Message + "' : This Message has been sent using SMS";
         }
     }
 }
 ```
-> Platinum.cs
+> EmailMessageSender.cs
 ```C#
-namespace Bank.Domain
+namespace Notifications.Domain
 {
-    public class Platinum : ICreditCard
+    public class EmailMessageSender : IMessageSender
     {
-        public string GetCardType()
+        public string SendMessage(string Message)
         {
-            return "Platinum Plus";
-        }
-        public int GetCreditLimit()
-        {
-            return 35000;
-        }
-        public int GetAnnualCharge()
-        {
-            return 2000;
+            return "'" + Message + "'   : This Message has been sent using Email";
         }
     }
 }
 ```
-> Titanium.cs
+8. Seguidamente crear la clase abstracta que permitira definir los posibles tipos de mensajes por lo que en el Proyecto de Notifications.Domain se debe agregar el archivo AbstractMessage.cs con el siguiente código:
 ```C#
-namespace Bank.Domain
+namespace Notifications.Domain
 {
-    public class Titanium : ICreditCard
+    public abstract class AbstractMessage
     {
-        public string GetCardType()
-        {
-            return "Titanium Edge";
-        }
-        public int GetCreditLimit()
-        {
-            return 25000;
-        }
-        public int GetAnnualCharge()
-        {
-            return 1500;
-        }
+        protected IMessageSender _messageSender;
+        public abstract string SendMessage(string Message);        
     }
 }
 ```
-8. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo CreditCardTests.cs e introducir el siguiente código:
-```C#
-using Bank.Domain;
-using NUnit.Framework;
 
-namespace Bank.Domain.Tests
-{
-    public class CreditCardTests
-    {
-        [Test]
-        public void GivenCreditTypeSelected_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            string cardType = "MoneyBack";
-            ICreditCard? cardDetails = null;
-            if (cardType == "MoneyBack")
-            {
-                cardDetails = new MoneyBack();
-            }
-            else if (cardType == "Titanium")
-            {
-                cardDetails = new Titanium();
-            }
-            else if (cardType == "Platinum")
-            {
-                cardDetails = new Platinum();
-            }
-
-            Assert.IsNotNull(cardDetails);
-            Assert.IsNotEmpty(cardDetails.GetCardType());
-            Assert.GreaterOrEqual(cardDetails.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(cardDetails.GetAnnualCharge(), 0);
-        }
-    }
-}
-```
-9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
+10. Ahora se necesita implementar el mecanimos que comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
 ```Bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
