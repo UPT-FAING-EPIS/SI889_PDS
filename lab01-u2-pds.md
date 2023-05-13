@@ -23,7 +23,7 @@
 
 ## DESARROLLO
 
-### PARTE I: Factory Method Design Pattern
+### PARTE I: Factory Design Pattern
 
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/f810f99d-efe2-4ec8-a04c-83dee3872787)
 
@@ -195,11 +195,62 @@ namespace Bank.Domain
     }
 }
 ```
-11. Ejecutar nuevamente el pase 8 y ahora deberia devolver algo similar a lo siguiente:
-```Bash
-Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: < 1 ms
+13. Adicionalmente modificar la clase de pruebas CreditCardTests, con el siguiente código:
+```C#
+using Bank.Domain;
+using NUnit.Framework;
+
+namespace Bank.Domain.Tests
+{
+    public class CreditCardTests
+    {
+        [Test]
+        public void GivenCreditTypeSelected_WhenRequestCreditCard_ThenNewValidCreditCard()
+        {
+            string cardType = "MoneyBack";
+            ICreditCard? cardDetails = CreditCardFactory.GetCreditCard(cardType);
+            Assert.IsNotNull(cardDetails);
+            Assert.IsNotEmpty(cardDetails.GetCardType());
+            Assert.GreaterOrEqual(cardDetails.GetCreditLimit(), 0);
+            Assert.GreaterOrEqual(cardDetails.GetAnnualCharge(), 0);
+        }
+    }
+}
 ```
-12. Con la finalidad de aumentar la confienza en la aplicación, se ampliará el rango de pruebas para lo cual editar la clase de prueba BankAccountTests y adicionar el método siguiente que contempla un escenario de prueba diferente:
+14. Al ejecutar nuevamente el paso 9 deberia seguir funcionando correctamente.
+
+15. Con esto se aplicado el patrón de diseño FABRICA de la siguiente manera:
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bae74678-32e7-454f-96dc-bf4f357c676c)
+
+> Pero con este patrón se ha solucionado parcialmente los problemas indicados en el punto 11, en especifico solo se ha reducido en cierto porcentaje el Alto Acoplamiento.
+https://dotnettutorials.net/lesson/factory-method-design-pattern-csharp/
+
+### PARTE II: Factory Method Design Pattern
+
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/09109954-6f0f-4db3-8449-c82b4abcfa4d)
+
+1. Utilizando el proyecto de la primera parte proceder a crear el archivo CreditCardAbstractMethod.cs en el proyecto Bank.Domain
+
+```C#
+namespace Bank.Domain
+{
+    public abstract class CreditCardFactoryMethod
+    {
+        protected abstract ICreditCard MakeProduct();
+        // Also note that The Creator's primary responsibility is not creating products. 
+        // Usually, it contains some core business logic that relies on Product objects, returned by the factory method. 
+        public ICreditCard CreateProduct()
+        {
+            //Call the MakeProduct which will create and return the appropriate object 
+            ICreditCard creditCard = this.MakeProduct();
+            //Return the Object to the Client
+            return creditCard;
+        }
+    }
+}
+```
+2. Ahora proceder a crear las implementaciones de la clase abstracta anterior para cada producto, crear lo siguientes archivos en el proyecto Bank.Domain:
+> PlatinumFactory.cs
 ```C#
         [Test]
         public void Debit_WhenAmountIsLessThanZero_ShouldThrowArgumentOutOfRange()
