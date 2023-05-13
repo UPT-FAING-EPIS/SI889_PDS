@@ -27,6 +27,8 @@
 
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/186e0bbd-0d14-48eb-af20-8f46dc0a08ca)
 
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/fab291c1-01e9-4a11-bfbd-a34609466cab)
+
 1. Iniciar la aplicación Powershell o Windows Terminal en modo administrador 
 2. Ejecutar el siguiente comando para crear una nueva solución
 ```
@@ -83,7 +85,7 @@ namespace Notifications.Domain
     }
 }
 ```
-8. Seguidamente crear la clase abstracta que permitira definir los posibles tipos de mensajes por lo que en el Proyecto de Notifications.Domain se debe agregar el archivo AbstractMessage.cs con el siguiente código:
+8. Seguidamente crear la clase abstracta que permitira definir los posibles tipos de mensajes por lo que en el proyecto de Notifications.Domain se debe agregar el archivo AbstractMessage.cs con el siguiente código:
 ```C#
 namespace Notifications.Domain
 {
@@ -94,74 +96,92 @@ namespace Notifications.Domain
     }
 }
 ```
+9. Sobre esta clase abstracta ahora se necesita implementar los tipos de mensajes concretos, para eso adicionar los siguientes archivos al proyecto Notifications.Domain:
+> ShortMessage.cs
+```C#
+namespace Notifications.Domain
+{
+    public class ShortMessage: AbstractMessage
+    {
+        public const string LARGE_ERROR_MESSAGE = "Unable to send the message as length > 10 characters";
+        public ShortMessage(IMessageSender messageSender)
+        {
+            this._messageSender = messageSender;
+        }
+        public override string SendMessage(string Message)
+        {
+            if (Message.Length <= 25)
+                return _messageSender.SendMessage(Message);
+            else
+                throw new ArgumentException(LARGE_ERROR_MESSAGE);
+        }
+    }
+}
+```
+> LongMessage.cs
+```C#
+namespace Notifications.Domain
+{
+    public class LongMessage: AbstractMessage
+    {
+        public LongMessage(IMessageSender messageSender)
+        {
+            this._messageSender = messageSender;
+        }
+        public override string SendMessage(string Message)
+        {
+           return _messageSender.SendMessage(Message);
+        }
+    }
+}
+```
+10. Ahora proceder a implementar unas pruebas para verificar el correcto funcionamiento de la aplicación. Para esto al proyecto Notifications.Domain.Tests adicionar el archivo MessageTests.cs y agregar el siguiente código:
+```C#
+using Notifications.Domain;
+using NUnit.Framework;
 
-10. Ahora se necesita implementar el mecanimos que comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
+namespace Notifications.Domain.Tests
+{
+    public class MessageTests
+    {
+        [Test]
+        public void GivenLongMessage_WhenSend_ThenEmailIsTriggered()
+        {
+            string Message = "Este es un mensaje bien pero bien largoooooooooooooooooooooooo.";
+            AbstractMessage longMessage = new LongMessage(new EmailMessageSender());
+            var confirm = longMessage.SendMessage(Message);
+            Assert.IsTrue(!string.IsNullOrEmpty(confirm));
+            Assert.IsTrue(confirm.Contains(Message));
+        }
+        [Test]
+        public void GivenShortMessage_WhenSend_ThenSMSIsTriggered()
+        {
+            string Message = "Este es un mensaje corto.";
+            AbstractMessage shortMessage = new ShortMessage(new SmsMessageSender());
+            var confirm = shortMessage.SendMessage(Message);
+            Assert.IsTrue(!string.IsNullOrEmpty(confirm));
+            Assert.IsTrue(confirm.Contains(Message));
+        }
+        [Test]
+        public void GivenLargeMessage_WhenSendinSMS_ThenOccursException()
+        {
+            string Message = "Este es un mensaje largooooooooooooooooo.";
+            AbstractMessage shortMessage = new ShortMessage(new SmsMessageSender());
+            Assert.Throws<ArgumentException>(
+                () => shortMessage.SendMessage(Message)
+                , ShortMessage.LARGE_ERROR_MESSAGE);
+        }
+    }
+}
+```
+11. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
 ```Bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
-10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
+12. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
 ```Bash
-Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 5 ms
+Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 5 ms
 ```
-11. Funciona pero ¿es correcta la implementación del código? ¿Qué problemas tiene esta implementación?
-* Primero tenemos un problema de Alto Acoplamiento entre la clase de prueba y las clases productos (MoneyBack, Titanium y Platinum). Asi que cuando hay un cambio en una d elas clases todas las demàs deberan ser cambiadas.
-* Segundo, si se adiciona un nuevo tipo de tarjeta de crédito, necesitamos hacer cambios en la lògica de creación que se encuentra en el metod de prueba, adicionando una nueva condición IF-ELSE lo cual no solo complica el desarrollo, sino también el proceso pruebas.
-  
-12. Para solucionar los problemas anteriores mencionados utilizaremos el patrón de diseño FABRICA, para lo cual ahora en el proyecto Bank.Domain proceder a agregar el archivo CreditCarFactory.cs con el siguiente código:
-```C#
-namespace Bank.Domain
-{
-    public class CreditCardFactory
-    {
-        public static ICreditCard GetCreditCard(string cardType)
-        {
-            ICreditCard? cardDetails = null;
-            if (cardType == "MoneyBack")
-            {
-                cardDetails = new MoneyBack();
-            }
-            else if (cardType == "Titanium")
-            {
-                cardDetails = new Titanium();
-            }
-            else if (cardType == "Platinum")
-            {
-                cardDetails = new Platinum();
-            }
-            return cardDetails; 
-        }
-    }
-}
-```
-13. Adicionalmente modificar la clase de pruebas CreditCardTests, con el siguiente código:
-```C#
-using Bank.Domain;
-using NUnit.Framework;
-
-namespace Bank.Domain.Tests
-{
-    public class CreditCardTests
-    {
-        [Test]
-        public void GivenCreditTypeSelected_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            string cardType = "MoneyBack";
-            ICreditCard? cardDetails = CreditCardFactory.GetCreditCard(cardType);
-            Assert.IsNotNull(cardDetails);
-            Assert.IsNotEmpty(cardDetails.GetCardType());
-            Assert.GreaterOrEqual(cardDetails.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(cardDetails.GetAnnualCharge(), 0);
-        }
-    }
-}
-```
-14. Al ejecutar nuevamente el paso 9 deberia seguir funcionando correctamente.
-
-15. Con esto se aplicado el patrón de diseño FABRICA de la siguiente manera:
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bae74678-32e7-454f-96dc-bf4f357c676c)
-
-> Pero con este patrón se ha solucionado parcialmente los problemas indicados en el punto 11, en especifico solo se ha reducido en cierto porcentaje el Alto Acoplamiento.
-https://dotnettutorials.net/lesson/factory-method-design-pattern-csharp/
 
 ### PARTE II: Factory Method Design Pattern
 
