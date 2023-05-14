@@ -183,10 +183,41 @@ dotnet test --collect:"XPlat Code Coverage"
 Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 5 ms
 ```
 
+
 ### PARTE II: Facade Design Pattern
 
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/09109954-6f0f-4db3-8449-c82b4abcfa4d)
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/ece5c02f-fe5e-4125-91f4-7479f6c3d746)
 
+
+1. Iniciar una nueva instancia de la aplicación Powershell o Windows Terminal en modo administrador 
+2. Ejecutar el siguiente comando para crear una nueva solución
+```
+dotnet new sln -o CustomerApp
+```
+3. Acceder a la solución creada y ejecutar el siguiente comando para crear una nueva libreria de clases y adicionarla a la solución actual.
+```
+cd CustomerApp
+dotnet new classlib -o CustomerApp.Domain
+dotnet sln add ./CustomerApp.Domain/CustomerApp.Domain.csproj
+```
+4. Ejecutar el siguiente comando para crear un nuevo proyecto de pruebas y adicionarla a la solución actual
+```
+dotnet new nunit -o CustomerApp.Domain.Tests
+dotnet sln add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj
+dotnet add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj reference ./CustomerApp.Domain/CustomerApp.Domain.csproj
+```
+5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Notifications.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
+
+6. Primero se necesita implementar la interfaz que servirá de PUENTE entre la clase abstracta de mensajes y las posible implementaciones de envio. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs :
+```C#
+namespace Notifications.Domain
+{
+    public interface IMessageSender
+    {
+        string SendMessage(string Message);
+    }
+}
+```
 1. Utilizando el proyecto de la primera parte proceder a crear el archivo CreditCardAbstractMethod.cs en el proyecto Bank.Domain
 
 ```C#
