@@ -208,15 +208,19 @@ dotnet add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj reference 
 ```
 5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Notifications.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. Primero se necesita implementar la interfaz que servirá de PUENTE entre la clase abstracta de mensajes y las posible implementaciones de envio. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs :
+6. Primero se necesita implementar la nes de envio. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs :
 ```C#
-namespace Notifications.Domain
+namespace FacadeDesignPatternRealTimeExample
 {
-    public interface IMessageSender
+    public class Customer
     {
-        string SendMessage(string Message);
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string MobileNumber { get; set; }
+        public string Address { get; set; }
+        //Any other Properties as per the Business Requirements
     }
-}
+} 
 ```
 1. Utilizando el proyecto de la primera parte proceder a crear el archivo CreditCardAbstractMethod.cs en el proyecto Bank.Domain
 
