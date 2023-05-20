@@ -301,7 +301,7 @@ namespace CustomerApp.Domain
 }
 ```
 
-8. Para probar esta implementacón, crear el archivo CustomerTests.cs en el proyecto CustomerApp.Domain.Tests:
+8. Para probar esta implementación, crear el archivo CustomerTests.cs en el proyecto CustomerApp.Domain.Tests:
 ```C#
 using NUnit.Framework;
 
@@ -335,44 +335,62 @@ namespace CustomerApp.Domain.Tests
     }
 }
 ```
-4. Ejecutar nuevamente el paso 9 (Parte I) para lo cual se obtendra una respuesta similar a la siguiente:
+9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar el comando:
+```Bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
 ```Bash
 Total tests: 1. Passed: 1. Failed: 0. Skipped: 0
 ```
-5. What is the Problem with the above Design?
+11. Entonces ¿cuál es problema con este diseño? Funciona.... pero el problema es que ahora existen muchos sub sistemas como Validador, Acceso a Datos y Servicio de Email y el cliente que las utilice necesita seguir la secuencia apropiada para crear y consumir los objetos de los subsistemas. Existe una posibilidad que el cliente no siga esta secuencia apropiada o que olvide incluir o utilizar alguno de estos sub sistemas. Entonces si en vez de darle acceso a los sub sistemas, se crea una sola interfaz y se le brinda acceso al cliente para realizar el registo, asi la lógica compleja se traslada a esta interfaz sencilla. Para esto se utilizará el patrón FACHADA el cual escondera toda la complejidad y brindará un solo metodo cimple de usar al cliente.
 
-Now, if you see the output, then you will see the output as expected. Then what is the problem with the above application design? The problem is now we have many subsystems like Validator, CustomerDataAccessLayer, and Email. And the Client needs to follow the appropriate sequence to create and consume the objects of the above subsystems. And here, there is a high chance that the client might not follow the proper sequence, or the client might forget to use one of the subsystems. For example, in the below code, the client forgot to use the Validator class and hence there is a chance that we might save some invalid data in the database.
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/a9cb73bb-c996-4e9a-bf4c-f665f1957119)
 
-6. Instead of providing access to these subsystems, if we create a simple interface and give access to the client and the client will use the simple interface to do the registration. The complex logic will be written inside the simple interface. And we can achieve this very easily by using the Facade Design Pattern in C#.
-
-The Facade Design Pattern will hide all the complexity and provide an easy-to-use interface to the client and the client will use the Facade instead of the subsystems. So, with Facade Design Pattern, our class diagram or UML diagram will look like the one below.
-
-https://dotnettutorials.net/wp-content/uploads/2023/03/word-image-36090-5.png![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/102dd12b-fd4d-46d3-9416-c2df66abcd64)
-
-4. Ejecutar nuevamente el paso 9 (Parte I) para lo cual se obtendra una respuesta similar a la siguiente:
+12. Para lo cual proceder a crear el archivo CustomerRegistration.cs en el proyecto CustomerApp.Domain, con el siguiente contenido:
 ```C#
+using CustomerApp.Domain;
+
 public class CustomerRegistration
+{
+    public bool RegisterCustomer(Customer customer)
     {
-        public bool RegisterCustomer(Customer customer)
-        {
-            //Step1: Validate the Customer
-            Validator validator = new Validator();
-            bool IsValid = validator.ValidateCustomer(customer);
-            //Step1: Save the Customer Object into the database
-            CustomerDataAccessLayer customerDataAccessLayer = new CustomerDataAccessLayer();
-            bool IsSaved = customerDataAccessLayer.SaveCustomer(customer);
-            //Step3: Send the Registration Email to the Customer
-            Email email = new Email();
-            email.SendRegistrationEmail(customer);
-            return true;
-        }
+        //Step1: Validate the Customer
+        Validator validator = new Validator();
+        bool IsValid = validator.ValidateCustomer(customer);
+        //Step1: Save the Customer Object into the database
+        DataAccessLayer customerDataAccessLayer = new DataAccessLayer();
+        bool IsSaved = customerDataAccessLayer.SaveCustomer(customer);
+        //Step3: Send the Registration Email to the Customer
+        EmailService email = new EmailService();
+        email.SendRegistrationEmail(customer);
+        return true;
     }
-    ```
-
-8. Finalmente podemos confirmar con este patròn un desacoplamiento de la clase que lo ejecuta, asimismo la reglas de creación ya no dependen de las clausula IF-ELSE, por lo que para crear un nuevo tipo de tarjeta solo será necesario crear una nueva clase basada en la clase abstracta de CreditCardFactoryMethod:
-
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bbad4ef3-4f18-4db3-85c0-c7f4f28e5ef0)
+}
+```
+8. Finalmente adciionar un nuevo método de prueba en la clase CustomerTests para comprobar el funcionamiento de la nueva clase creada:
+```C#
+        [Test]
+        public void GivenANewCustomer_WhenRegister_ThenIsRegisteredSuccessfully()
+        {
+            //Step1: Create an Instance of Customer Class
+            Customer customer = Customer.Create(
+                "Jose Cuadros","p.cuadros@gmail.com","1234567890","Tacnamandapio","str0ng.pa55");
+            //Step2: Using Facade Class
+            bool IsRegistered = new CustomerRegistration().RegisterCustomer(customer);
+            Assert.IsNotNull(customer);
+            Assert.IsTrue(IsRegistered);
+        }     
+```
+9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar el comando:
+```Bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
+```Bash
+Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 11 ms 
+```
 
 ---
 ## Actividades Encargadas
-1. Crear un nuevo proyecto de dominio y su respectivo proyecto de pruebas utilizando otro patrón de diseño CREACIONAL.
+1. Crear un nuevo proyecto de dominio y su respectivo proyecto de pruebas utilizando otro patrón de diseño ESTRUCTURAL.
