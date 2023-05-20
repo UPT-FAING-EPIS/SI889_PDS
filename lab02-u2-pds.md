@@ -206,7 +206,7 @@ dotnet new nunit -o CustomerApp.Domain.Tests
 dotnet sln add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj
 dotnet add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj reference ./CustomerApp.Domain/CustomerApp.Domain.csproj
 ```
-5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Notifications.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
+5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto CustomerApp.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
 6. Primero se necesita implementar la entidad Cliente, para esto crear el archivo Customer.cs en el proyecto CustomerApp.Domain con el siguiente código:
 ```C#
@@ -218,100 +218,158 @@ namespace CustomerApp.Domain
         public string Email { get; set; }
         public string MobileNumber { get; set; }
         public string Address { get; set; }
+        public string Password { get; set; }
+        public static Customer Create(string name, string email, string mobileNumber, string address, string password)
+        {
+            return new Customer() {
+                Name = name, Email = email, MobileNumber = mobileNumber, Address = address, Password = password
+            };
+        }
     }
 }
 ```
-7. Ahora implementar el validador de datos del cliente
+7. Ahora se debe implementar cada una de clases correspondiente al flujo de creaciòn del cliente (validar, guardar y enviar email) para eso se deberan crear los siguientes archivos con el còdigo correspondiente:
+> Validator.cs
+```C#
+namespace CustomerApp.Domain
+{
+    public class Customer
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string MobileNumber { get; set; }
+        public string Address { get; set; }
+        public string Password { get; set; }
+        public static Customer Create(string name, string email, string mobileNumber, string address, string password)
+        {
+            return new Customer() {
+                Name = name, Email = email, MobileNumber = mobileNumber, Address = address, Password = password
+            };
+        }
+    }
+}
+```
+> DataAccessLayer.cs
+```C#
+namespace CustomerApp.Domain
+{
+    public class DataAccessLayer
+    {
+        public List<Customer> Customers { get; set; }
+        public DataAccessLayer()
+        {
+            Customers = new List<Customer>();
+        }
+        public bool SaveCustomer(Customer customer)
+        {
+            Customers.Add(customer);
+            return true;
+        }        
+    }
+}
+```
+> EmailService.cs
+```C#
+using System.Net;
+using System.Net.Mail;
 
-```C#
-namespace Bank.Domain
+namespace CustomerApp.Domain
 {
-    public abstract class CreditCardFactoryMethod
+    public class EmailService
     {
-        protected abstract ICreditCard MakeProduct();
-        // Also note that The Creator's primary responsibility is not creating products. 
-        // Usually, it contains some core business logic that relies on Product objects, returned by the factory method. 
-        public ICreditCard CreateProduct()
+        public bool SendRegistrationEmail(Customer customer)
         {
-            //Call the MakeProduct which will create and return the appropriate object 
-            ICreditCard creditCard = this.MakeProduct();
-            //Return the Object to the Client
-            return creditCard;
-        }
+            var smtpClient = new SmtpClient("smtp.gmail.com")
+            {
+                UseDefaultCredentials = false,
+                //Port = 587,
+                Credentials = new NetworkCredential(customer.Email, customer.Password),
+                EnableSsl = true,
+            };
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(customer.Email),
+                Subject = "Test mail",
+                Body = "<h1>Hello</h1>",
+                IsBodyHtml = true,
+            };
+            mailMessage.To.Add(customer.Email);
+            //smtpClient.Send(mailMessage);
+            return true;
+        }        
     }
 }
 ```
-2. Ahora proceder a crear las implementaciones de la clase abstracta anterior para cada producto, crear los siguientes archivos en el proyecto Bank.Domain:
-> MoneyBackFactoryMethod.cs
-```C#
-namespace Bank.Domain
-{
-    public class MoneyBackFactoryMethod : CreditCardFactoryMethod
-    {
-        protected override ICreditCard MakeProduct()
-        {
-            ICreditCard product = new MoneyBack();
-            return product;
-        }
-    }
-}
-```
-> PlatinumFactoryMethod.cs
-```C#
-namespace Bank.Domain
-{
-    public class PlatinumFactoryMethod: CreditCardFactoryMethod
-    {
-        protected override ICreditCard MakeProduct()
-        {
-            ICreditCard product = new Platinum();
-            return product;
-        }
-    }
-}
-```
-> TitaniumFactoryMethod.cs
-```C#
-namespace Bank.Domain
-{
-    public class TitaniumFactoryMethod : CreditCardFactoryMethod
-    {
-        protected override ICreditCard MakeProduct()
-        {
-            ICreditCard product = new Titanium();
-            return product;
-        }
-    }
-}
-```
-3. Para probar esta implementacón, modificar la clase de pruebas CreditCardTests y adicionar los siguientes métodos:
-```C#
-        [Test]
-        public void GivenCreditTypePlatinumChoosen_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            ICreditCard creditCard = new PlatinumFactoryMethod().CreateProduct();
-            Assert.IsNotNull(creditCard);
-            Assert.IsNotEmpty(creditCard.GetCardType());
-            Assert.GreaterOrEqual(creditCard.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(creditCard.GetAnnualCharge(), 0);
-        }
 
+8. Para probar esta implementacón, crear el archivo CustomerTests.cs en el proyecto CustomerApp.Domain.Tests:
+```C#
+using NUnit.Framework;
+
+namespace CustomerApp.Domain.Tests
+{
+    public class CustomerTests
+    {
         [Test]
-        public void GivenCreditTypeTitaniumChoosen_WhenRequestCreditCard_ThenNewValidCreditCard()
+        public void GivenANewCustomer_WhenRegister_ThenIsValidatedSavedEmailedSuccessfully()
         {
-            ICreditCard creditCard = new TitaniumFactoryMethod().CreateProduct();
-            Assert.IsNotNull(creditCard);
-            Assert.IsNotEmpty(creditCard.GetCardType());
-            Assert.AreEqual(creditCard.GetCardType(),"Titanium Edge");
-            Assert.GreaterOrEqual(creditCard.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(creditCard.GetAnnualCharge(), 0);
+            //Step1: Create an Instance of Customer Class
+            Customer customer = Customer.Create(
+                "Jose Cuadros","p.cuadros@gmail.com","1234567890","Tacnamandapio","str0ng.pa55");
+            
+            //Step2: Validate the Customer
+            Validator validator = new Validator();
+            bool IsValid = validator.ValidateCustomer(customer);
+            //Step3: Save the Customer Object into the database
+            DataAccessLayer dataAccessLayer = new DataAccessLayer();
+            bool IsSaved = dataAccessLayer.SaveCustomer(customer);
+            //Step4: Send the Registration Email to the Customer
+            EmailService email = new EmailService();
+            bool IsEmailed = email.SendRegistrationEmail(customer);
+            
+            Assert.IsNotNull(customer);
+            Assert.Greater(dataAccessLayer.Customers.Count,0);
+            Assert.IsTrue(IsValid);
+            Assert.IsTrue(IsSaved);
+            Assert.IsTrue(IsEmailed);
         }
+    }
+}
 ```
 4. Ejecutar nuevamente el paso 9 (Parte I) para lo cual se obtendra una respuesta similar a la siguiente:
 ```Bash
-Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 9 ms
+Total tests: 1. Passed: 1. Failed: 0. Skipped: 0
 ```
-5. Finalmente podemos confirmar con este patròn un desacoplamiento de la clase que lo ejecuta, asimismo la reglas de creación ya no dependen de las clausula IF-ELSE, por lo que para crear un nuevo tipo de tarjeta solo será necesario crear una nueva clase basada en la clase abstracta de CreditCardFactoryMethod:
+5. What is the Problem with the above Design?
+
+Now, if you see the output, then you will see the output as expected. Then what is the problem with the above application design? The problem is now we have many subsystems like Validator, CustomerDataAccessLayer, and Email. And the Client needs to follow the appropriate sequence to create and consume the objects of the above subsystems. And here, there is a high chance that the client might not follow the proper sequence, or the client might forget to use one of the subsystems. For example, in the below code, the client forgot to use the Validator class and hence there is a chance that we might save some invalid data in the database.
+
+6. Instead of providing access to these subsystems, if we create a simple interface and give access to the client and the client will use the simple interface to do the registration. The complex logic will be written inside the simple interface. And we can achieve this very easily by using the Facade Design Pattern in C#.
+
+The Facade Design Pattern will hide all the complexity and provide an easy-to-use interface to the client and the client will use the Facade instead of the subsystems. So, with Facade Design Pattern, our class diagram or UML diagram will look like the one below.
+
+https://dotnettutorials.net/wp-content/uploads/2023/03/word-image-36090-5.png![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/102dd12b-fd4d-46d3-9416-c2df66abcd64)
+
+4. Ejecutar nuevamente el paso 9 (Parte I) para lo cual se obtendra una respuesta similar a la siguiente:
+```C#
+public class CustomerRegistration
+    {
+        public bool RegisterCustomer(Customer customer)
+        {
+            //Step1: Validate the Customer
+            Validator validator = new Validator();
+            bool IsValid = validator.ValidateCustomer(customer);
+            //Step1: Save the Customer Object into the database
+            CustomerDataAccessLayer customerDataAccessLayer = new CustomerDataAccessLayer();
+            bool IsSaved = customerDataAccessLayer.SaveCustomer(customer);
+            //Step3: Send the Registration Email to the Customer
+            Email email = new Email();
+            email.SendRegistrationEmail(customer);
+            return true;
+        }
+    }
+    ```
+
+8. Finalmente podemos confirmar con este patròn un desacoplamiento de la clase que lo ejecuta, asimismo la reglas de creación ya no dependen de las clausula IF-ELSE, por lo que para crear un nuevo tipo de tarjeta solo será necesario crear una nueva clase basada en la clase abstracta de CreditCardFactoryMethod:
 
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bbad4ef3-4f18-4db3-85c0-c7f4f28e5ef0)
 
