@@ -233,7 +233,7 @@ namespace CustomerApp.Domain
 ```C#
 namespace CustomerApp.Domain
 {
-    public class Customer
+    public class Validator
     {
         public string Name { get; set; }
         public string Email { get; set; }
