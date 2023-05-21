@@ -23,28 +23,29 @@
 
 ### PARTE I: Strategy Design Pattern 
 
-
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/21cf440e-8156-498c-afd7-95c066ffaa93)
+En la imagen Steve compra un monitor y una lavadora, pero a la hora de acercarse a la ventanilla existen tres formas de pagar: Tarjeta de Crédito, Tarjeta de Débito y Efectivo.
 
 1. Iniciar la aplicación Powershell o Windows Terminal en modo administrador 
 2. Ejecutar el siguiente comando para crear una nueva solución
 ```
-dotnet new sln -o Notifications
+dotnet new sln -o Payment
 ```
 3. Acceder a la solución creada y ejecutar el siguiente comando para crear una nueva libreria de clases y adicionarla a la solución actual.
 ```
-cd Notifications
-dotnet new classlib -o Notifications.Domain
-dotnet sln add ./Notifications.Domain/Notifications.Domain.csproj
+cd Payment
+dotnet new classlib -o Payment.Domain
+dotnet sln add ./Payment.Domain/Payment.Domain.csproj
 ```
 4. Ejecutar el siguiente comando para crear un nuevo proyecto de pruebas y adicionarla a la solución actual
 ```
-dotnet new nunit -o Notifications.Domain.Tests
-dotnet sln add ./Notifications.Domain.Tests/Notifications.Domain.Tests.csproj
-dotnet add ./Notifications.Domain.Tests/Notifications.Domain.Tests.csproj reference ./Notifications.Domain/Notifications.Domain.csproj
+dotnet new nunit -o Payment.Domain.Tests
+dotnet sln add ./Payment.Domain.Tests/Payment.Domain.Tests.csproj
+dotnet add ./Payment.Domain.Tests/Payment.Domain.Tests.csproj reference ./Payment.Domain/Payment.Domain.csproj
 ```
-5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Notifications.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
+5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto Payment.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. Primero se necesita implementar la interfaz que servirá de PUENTE entre la clase abstracta de mensajes y las posible implementaciones de envio. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IMessageSender.cs :
+6. Primero se necesita implementar la interfaz que servirá de ESTRATEGIA base para las posibles implementaciones de pagos. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IPaymentStrategy.cs :
 ```C#
 namespace Notifications.Domain
 {
