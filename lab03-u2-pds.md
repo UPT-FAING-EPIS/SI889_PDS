@@ -197,6 +197,13 @@ dotnet test --collect:"XPlat Code Coverage"
 Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 12 ms
 ```
 
+13. Finalmente se puede apreciar que existen tres componentes principales en el patrón ESTARTEGIA:
+a. Estrategia: declarada en una interfac para ser implementada para todos los algoritmos soportado
+b. EstrategiaConcreta: Es la implementa la estrategia para cada algoritmo
+c. Conexto: esta es la clase que mantiene la referencia al objeto Estrategia y luego utiliza la referencia para llamar al algoritmo definido por cada EstrtaegiaConcreta
+
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/e132b3dd-1b5d-4cdf-a91d-fe114071c4bb)
+
 
 ### PARTE II: Facade Design Pattern
 
