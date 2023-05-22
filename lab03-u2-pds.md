@@ -47,127 +47,144 @@ dotnet add ./Payment.Domain.Tests/Payment.Domain.Tests.csproj reference ./Paymen
 
 6. Primero se necesita implementar la interfaz que servirá de ESTRATEGIA base para las posibles implementaciones de pagos. Por eso en VS Code, en el proyecto Notifications.Domain proceder a crear el archivo IPaymentStrategy.cs :
 ```C#
-namespace Notifications.Domain
+namespace Payment.Domain
 {
-    public interface IMessageSender
+    public interface IPaymentStrategy
     {
-        string SendMessage(string Message);
+        bool Pay(double amount);
     }
 }
 ```
-7. Ahora proceder a implementar las clases concretas o implementaiones a partir de la interfaz creada, Para esto en el proyecto Notifications.Domain proceder a crear los archivos siguientes:
-> SmsMessageSender.cs
+7. Ahora proceder a implementar las clases concretas o implementaciones a partir de la interfaz creada, Para esto en el proyecto Payment.Domain proceder a crear los archivos siguientes:
+> CreditCardPaymentStrategy.cs
 ```C#
-namespace Notifications.Domain
+namespace Payment.Domain
 {
-    public class SmsMessageSender : IMessageSender
+    public class CreditCardPaymentStrategy : IPaymentStrategy
     {
-        public string SendMessage(string Message)
+        public bool Pay(double amount)
         {
-            return "'" + Message + "' : This Message has been sent using SMS";
+            Console.WriteLine("Customer pays Rs " + amount + " using Credit Card");
+            return true;
         }
     }
 }
 ```
-> EmailMessageSender.cs
+> DebitCardPaymentStrategy.cs
 ```C#
-namespace Notifications.Domain
+namespace Payment.Domain
 {
-    public class EmailMessageSender : IMessageSender
+    public class DebitCardPaymentStrategy : IPaymentStrategy
     {
-        public string SendMessage(string Message)
+        public bool Pay(double amount)
         {
-            return "'" + Message + "'   : This Message has been sent using Email";
+            Console.WriteLine("Customer pays Rs " + amount + " using Debit Card");
+            return true;
         }
     }
 }
 ```
-8. Seguidamente crear la clase abstracta que permitira definir los posibles tipos de mensajes por lo que en el proyecto de Notifications.Domain se debe agregar el archivo AbstractMessage.cs con el siguiente código:
+> CashPaymentStrategy.cs
 ```C#
-namespace Notifications.Domain
+namespace Payment.Domain
 {
-    public abstract class AbstractMessage
+    public class CashPaymentStrategy : IPaymentStrategy
     {
-        protected IMessageSender _messageSender;
-        public abstract string SendMessage(string Message);        
+        public bool Pay(double amount)
+        {
+            Console.WriteLine("Customer pays Rs " + amount + " By Cash");
+            return true;
+        }
     }
 }
 ```
-9. Sobre esta clase abstracta ahora se necesita implementar los tipos de mensajes concretos, para eso adicionar los siguientes archivos al proyecto Notifications.Domain:
-> ShortMessage.cs
+8. Seguidamente crear la clase que funcionara de contexto y permitira la ejecución de cualquier estrategia, por lo que en el proyecto de Payment.Domain se debe agregar el archivo PaymentContext.cs con el siguiente código:
 ```C#
-namespace Notifications.Domain
+namespace Payment.Domain
 {
-    public class ShortMessage: AbstractMessage
+    public class PaymentContext
     {
-        public const string LARGE_ERROR_MESSAGE = "Unable to send the message as length > 10 characters";
-        public ShortMessage(IMessageSender messageSender)
+        // The Context has a reference to the Strategy object.
+        // The Context does not know the concrete class of a strategy. 
+        // It should work with all strategies via the Strategy interface.
+        private IPaymentStrategy PaymentStrategy;
+        // The Client will set what PaymentStrategy to use by calling this method at runtime
+        public void SetPaymentStrategy(IPaymentStrategy strategy)
         {
-            this._messageSender = messageSender;
+            PaymentStrategy = strategy;
         }
-        public override string SendMessage(string Message)
+        // The Context delegates the work to the Strategy object instead of
+        // implementing multiple versions of the algorithm on its own.
+        public bool Pay(double amount)
         {
-            if (Message.Length <= 25)
-                return _messageSender.SendMessage(Message);
+            return PaymentStrategy.Pay(amount);
+        }
+    }
+}
+```
+9. Adicionalmente para facilitar la utilización de las diferentes estrategias adicionaremos una fachada, para eso crear el archivo PaymentService.cs en el proyecto Payment.Domain:
+```C#
+namespace Payment.Domain
+{
+    public class PaymentService
+    {
+        public bool ProcessPayment(int SelectedPaymentType, double Amount)
+        {
+            //Create an Instance of the PaymentContext class
+            PaymentContext context = new PaymentContext();
+            if (SelectedPaymentType == (int)PaymentType.CreditCard)
+            {
+                context.SetPaymentStrategy(new CreditCardPaymentStrategy());
+            }
+            else if (SelectedPaymentType == (int)PaymentType.DebitCard)
+            {
+                context.SetPaymentStrategy(new DebitCardPaymentStrategy());
+            }
+            else if (SelectedPaymentType == (int)PaymentType.Cash)
+            {
+                context.SetPaymentStrategy(new CashPaymentStrategy());
+            }
             else
-                throw new ArgumentException(LARGE_ERROR_MESSAGE);
+            {
+                throw new ArgumentException("You Select an Invalid Payment Option");
+            }
+            //Finally, call the Pay Method
+            return context.Pay(Amount);;
         }
     }
-}
-```
-> LongMessage.cs
-```C#
-namespace Notifications.Domain
-{
-    public class LongMessage: AbstractMessage
+    public enum PaymentType
     {
-        public LongMessage(IMessageSender messageSender)
-        {
-            this._messageSender = messageSender;
-        }
-        public override string SendMessage(string Message)
-        {
-           return _messageSender.SendMessage(Message);
-        }
+        CreditCard = 1,  // 1 for CreditCard
+        DebitCard = 2,   // 2 for DebitCard
+        Cash = 3, // 3 for Cash
     }
 }
 ```
-10. Ahora proceder a implementar unas pruebas para verificar el correcto funcionamiento de la aplicación. Para esto al proyecto Notifications.Domain.Tests adicionar el archivo MessageTests.cs y agregar el siguiente código:
+10. Ahora proceder a implementar unas pruebas para verificar el correcto funcionamiento de la aplicación. Para esto al proyecto Payment.Domain.Tests adicionar el archivo PaymentTests.cs y agregar el siguiente código:
 ```C#
-using Notifications.Domain;
+using System;
 using NUnit.Framework;
-
-namespace Notifications.Domain.Tests
+using Payment.Domain;
+namespace Payment.Domain.Tests
 {
-    public class MessageTests
+    public class PaymentTests
     {
-        [Test]
-        public void GivenLongMessage_WhenSend_ThenEmailIsTriggered()
+        [TestCase(1, 1000)]
+        [TestCase(2, 2000)]
+        [TestCase(3, 3000)]
+        public void GivenAValidPaymentTypeAndAmount_WhenProcessPayment_ResultIsSuccesful(int paymentType, double amount)
         {
-            string Message = "Este es un mensaje bien pero bien largoooooooooooooooooooooooo.";
-            AbstractMessage longMessage = new LongMessage(new EmailMessageSender());
-            var confirm = longMessage.SendMessage(Message);
-            Assert.IsTrue(!string.IsNullOrEmpty(confirm));
-            Assert.IsTrue(confirm.Contains(Message));
+            bool PaymentResult = new PaymentService().ProcessPayment(paymentType, amount);
+            Assert.IsTrue(PaymentResult);
         }
-        [Test]
-        public void GivenShortMessage_WhenSend_ThenSMSIsTriggered()
+        [TestCase(4, 4000)]
+        public void GivenAnUnknownPaymentTypeAndAmount_WhenProcessPayment_ResultIsError(int paymentType, double amount)
         {
-            string Message = "Este es un mensaje corto.";
-            AbstractMessage shortMessage = new ShortMessage(new SmsMessageSender());
-            var confirm = shortMessage.SendMessage(Message);
-            Assert.IsTrue(!string.IsNullOrEmpty(confirm));
-            Assert.IsTrue(confirm.Contains(Message));
-        }
-        [Test]
-        public void GivenLargeMessage_WhenSendinSMS_ThenOccursException()
-        {
-            string Message = "Este es un mensaje largooooooooooooooooo.";
-            AbstractMessage shortMessage = new ShortMessage(new SmsMessageSender());
-            Assert.Throws<ArgumentException>(
-                () => shortMessage.SendMessage(Message)
-                , ShortMessage.LARGE_ERROR_MESSAGE);
-        }
+            //bool PaymentResult = new PaymentService().ProcessPayment(paymentType, amount);
+            var ex = Assert.Throws<ArgumentException>(
+                () => new PaymentService().ProcessPayment(paymentType, amount));
+            Assert.That(ex.Message, Is.EqualTo("You Select an Invalid Payment Option"));
+        }   
     }
 }
 ```
@@ -177,7 +194,7 @@ dotnet test --collect:"XPlat Code Coverage"
 ```
 12. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
 ```Bash
-Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 5 ms
+Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 12 ms
 ```
 
 
