@@ -229,7 +229,19 @@ dotnet add ./ATM.Domain.Tests/ATM.Domain.Tests.csproj reference ./ATM.Domain/ATM
 ```
 5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto ATM.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. Primero se necesita implementar la interfaz principal para la generación de comandos, para esto crear el archivo ICommand.cs en el proyecto ATM.Domain con el siguiente código:
+6. Inicialmente se necesita implementar la clase Cuenta que se utilizara en todas los comandos del ATM. Para esto crear el archivo Account.cs en el proyecto ATM.Domain con el siguiente código:
+```C#
+namespace ATM.Domain
+{
+    public class Account
+    {
+        public const decimal MAX_INPUT_AMOUNT = 10000;
+        public int AccountNumber { get; set; }
+        public decimal AccountBalance { get; set; }
+    }
+}
+```
+7. Seguidamente se necesita implementar la interfaz principal para la generación de comandos, para esto crear el archivo ICommand.cs en el proyecto ATM.Domain con el siguiente código:
 ```C#
 namespace CommandDesignPattern
 {
@@ -241,118 +253,111 @@ namespace CommandDesignPattern
     }
 }
 ```
-7. Ahora se debe implementar cada una de clases correspondiente al flujo de creaciòn del cliente (validar, guardar y enviar email) para eso se deberan crear los siguientes archivos con el còdigo correspondiente:
-> Validator.cs
+8. Ahora se debe implementar cada una de clases correspondiente a los comandos de Retirar y Depositar para eso se deberan crear los siguientes archivos con el còdigo correspondiente:
+> WithdrawCommand.cs
 ```C#
-namespace CustomerApp.Domain
-{
-    public class Validator
-    {
-        public bool ValidateCustomer(Customer customer)
-        {
-            //Need to Validate the Customer Object
-            if (string.IsNullOrEmpty(customer.Name)) throw new ArgumentException("Name can't be null or empty");
-            if (string.IsNullOrEmpty(customer.Email)) throw new ArgumentException("Email can't be null or empty");
-            if (string.IsNullOrEmpty(customer.MobileNumber)) throw new ArgumentException("MobileNumber can't be null or empty");
-            if (string.IsNullOrEmpty(customer.Address)) throw new ArgumentException("Address can't be null or empty");
-            return true;
-        }
-    }
-}
-```
-> DataAccessLayer.cs
-```C#
-namespace CustomerApp.Domain
-{
-    public class DataAccessLayer
-    {
-        public List<Customer> Customers { get; set; }
-        public DataAccessLayer()
-        {
-            Customers = new List<Customer>();
-        }
-        public bool SaveCustomer(Customer customer)
-        {
-            Customers.Add(customer);
-            return true;
-        }        
-    }
-}
-```
-> EmailService.cs
-```C#
-using System.Net;
-using System.Net.Mail;
+using System;
 
-namespace CustomerApp.Domain
+namespace ATM.Domain
 {
-    public class EmailService
+    public class WithdrawCommand : ICommand
     {
-        public bool SendRegistrationEmail(Customer customer)
+        Account _account;
+        decimal _amount;
+        public WithdrawCommand(Account account, decimal amount)
         {
-            var smtpClient = new SmtpClient("smtp.gmail.com")
-            {
-                UseDefaultCredentials = false,
-                //Port = 587,
-                Credentials = new NetworkCredential(customer.Email, customer.Password),
-                EnableSsl = true,
-            };
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(customer.Email),
-                Subject = "Test mail",
-                Body = "<h1>Hello</h1>",
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(customer.Email);
-            //smtpClient.Send(mailMessage);
-            return true;
+            _account = account;
+            _amount = amount;
+        }
+        public void Execute()
+        {
+            if (_amount > _account.AccountBalance) 
+                throw new ArgumentException("The input amount is greater than balance.");
+            _account.AccountBalance -= _amount;
+        }
+    }
+}
+```
+> DepositCommand.cs
+```C#
+using System;
+
+namespace ATM.Domain
+{
+    public class DepositCommand : ICommand
+    {
+        Account _account;
+        decimal _amount;
+        public DepositCommand(Account account, decimal amount)
+        {
+            _account = account;
+            _amount = amount;
+        }
+        public void Execute()
+        {
+            if (_amount > Account.MAX_INPUT_AMOUNT) 
+                throw new ArgumentException("The input amount is greater than maximum allowed.");
+            _account.AccountBalance += _amount;
         }        
     }
 }
 ```
 
-8. Para probar esta implementación, crear el archivo CustomerTests.cs en el proyecto CustomerApp.Domain.Tests:
+8. Finalmente para unir todos los comandos crear la clase ATM que permitira el manejo de los comandos, crear el archivo ATM.cs en el proyecto ATM.Domain:
+```C#
+namespace ATM.Domain
+{
+    public class ATM
+    {
+        ICommand _command;
+        public ATM(ICommand command)
+        {
+            _command = command;
+        }
+        public void ExecuteTask()
+        {
+            _command.Execute();
+        }
+    }
+}
+```
+
+9. Para probar esta implementación, crear el archivo ATMTests.cs en el proyecto ATM.Domain.Tests:
 ```C#
 using NUnit.Framework;
 
-namespace CustomerApp.Domain.Tests
+namespace ATM.Domain.Tests
 {
-    public class CustomerTests
+    public class ATMTests
     {
         [Test]
-        public void GivenANewCustomer_WhenRegister_ThenIsValidatedSavedEmailedSuccessfully()
+        public void GivenAccountAndWithdraw_ThenExecute_ReturnsCorrectAmount()
         {
-            //Step1: Create an Instance of Customer Class
-            Customer customer = Customer.Create(
-                "Jose Cuadros","p.cuadros@gmail.com","1234567890","Tacnamandapio","str0ng.pa55");
-            
-            //Step2: Validate the Customer
-            Validator validator = new Validator();
-            bool IsValid = validator.ValidateCustomer(customer);
-            //Step3: Save the Customer Object into the database
-            DataAccessLayer dataAccessLayer = new DataAccessLayer();
-            bool IsSaved = dataAccessLayer.SaveCustomer(customer);
-            //Step4: Send the Registration Email to the Customer
-            EmailService email = new EmailService();
-            bool IsEmailed = email.SendRegistrationEmail(customer);
-            
-            Assert.IsNotNull(customer);
-            Assert.Greater(dataAccessLayer.Customers.Count,0);
-            Assert.IsTrue(IsValid);
-            Assert.IsTrue(IsSaved);
-            Assert.IsTrue(IsEmailed);
+            var account = new Account() { AccountBalance = 300 };
+            decimal amount = 100;
+            var withdraw = new WithdrawCommand(account, amount);
+            new ATM(withdraw).ExecuteTask();
+            Assert.IsTrue(account.AccountBalance.Equals(200));
+        }
+        [Test]
+        public void GivenAccountAndDeposit_ThenExecute_ReturnsCorrectAmount()
+        {
+            var account = new Account() { AccountBalance = 200 };
+            decimal amount = 100;
+            var deposit = new DepositCommand(account, amount);
+            new ATM(deposit).ExecuteTask();
+            Assert.IsTrue(account.AccountBalance.Equals(300));
         }
     }
 }
 ```
-9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar el comando:
+10. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar el comando:
 ```Bash
 dotnet test --collect:"XPlat Code Coverage"
 ```
-10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
+11. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
 ```Bash
-Total tests: 1. Passed: 1. Failed: 0. Skipped: 0
+Correctas! - Con error:     0, Superado:     2, Omitido:     0, Total:     2, Duración: 5 ms
 ```
 11. Entonces ¿cuál es problema con este diseño? Funciona.... pero el problema es que ahora existen muchos sub sistemas como Validador, Acceso a Datos y Servicio de Email y el cliente que las utilice necesita seguir la secuencia apropiada para crear y consumir los objetos de los subsistemas. Existe una posibilidad que el cliente no siga esta secuencia apropiada o que olvide incluir o utilizar alguno de estos sub sistemas. Entonces si en vez de darle acceso a los sub sistemas, se crea una sola interfaz y se le brinda acceso al cliente para realizar el registo, asi la lógica compleja se traslada a esta interfaz sencilla. Para esto se utilizará el patrón FACHADA el cual escondera toda la complejidad y brindará un solo metodo cimple de usar al cliente.
 
