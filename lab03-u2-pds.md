@@ -207,9 +207,6 @@ c. Conexto: esta es la clase que mantiene la referencia al objeto Estrategia y l
 
 ### PARTE II: Command Design Pattern
 
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/ece5c02f-fe5e-4125-91f4-7479f6c3d746)
-
-
 1. Iniciar una nueva instancia de la aplicación Powershell o Windows Terminal en modo administrador 
 2. Ejecutar el siguiente comando para crear una nueva solución
 ```
@@ -364,17 +361,17 @@ dotnet test --collect:"XPlat Code Coverage"
 ```Bash
 Correctas! - Con error:     0, Superado:     2, Omitido:     0, Total:     2, Duración: 5 ms
 ```
-11. Entonces ¿cuál es problema con este diseño? Funciona.... pero el problema es que ahora existen muchos sub sistemas como Validador, Acceso a Datos y Servicio de Email y el cliente que las utilice necesita seguir la secuencia apropiada para crear y consumir los objetos de los subsistemas. Existe una posibilidad que el cliente no siga esta secuencia apropiada o que olvide incluir o utilizar alguno de estos sub sistemas. Entonces si en vez de darle acceso a los sub sistemas, se crea una sola interfaz y se le brinda acceso al cliente para realizar el registo, asi la lógica compleja se traslada a esta interfaz sencilla. Para esto se utilizará el patrón FACHADA el cual escondera toda la complejidad y brindará un solo metodo cimple de usar al cliente.
+11. Revisemos como funciona el patrón de diseño Comando.
 
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/50ecff5e-dc02-4b54-980f-8b72546b4129)
 
 Como se puede apreciar la imagen, el patron de diseño Comando consiste de 5 componentes:
 
-Receiver: This is a class that contains the actual implementation of the method that the client wants to call. In our example, it is the Open, Save, and Close method of the Document class.
-Command: This is going to be an interface that specifies the Execute operation. In our example, it is the ICommand interface that has only one method i.e. Execute.
-ConcreteCommand: These are going to be classes that implement the ICommand interface and provide implementations for the Execute operation. As part of the Execute method, it is going to invoke operation(s) on the Receiver object. In our example, it is the OpenCommand, SaveCommand, and CloseCommand classes.
-Invoker: The Invoker is going to be a class and asks the command to carry out the action. In our example, it is the MenuOptions class.
-Client: This is the class that creates and executes the command object. In our example, it is the Main method of the Program class.
+Receiver: Es la clase que contiene la actual implementacionde los metods que el cliente quiere invocar. En este ejemplo la cuenta.
+Command: Esta viene a ser la interfaz que espeficica la operacion Ejecutar.
+ConcreteCommand: Con las clases que implementa la interfaz ICommand y proporcionan las implementaciones del metodo Ejecutar. 
+Invoker: El Invocadro viene a ser la clase que resuelve que Command realiza determinada accion. En este caso el ATM
+Client: Es la clase que crea y ejecuta el comando.
 
 ---
 ## Actividades Encargadas
