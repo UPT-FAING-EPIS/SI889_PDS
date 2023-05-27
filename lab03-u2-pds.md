@@ -231,6 +231,7 @@ dotnet add ./ATM.Domain.Tests/ATM.Domain.Tests.csproj reference ./ATM.Domain/ATM
 
 6. Inicialmente se necesita implementar la clase Cuenta que se utilizara en todas los comandos del ATM. Para esto crear el archivo Account.cs en el proyecto ATM.Domain con el siguiente código:
 ```C#
+using System;
 namespace ATM.Domain
 {
     public class Account
@@ -238,6 +239,19 @@ namespace ATM.Domain
         public const decimal MAX_INPUT_AMOUNT = 10000;
         public int AccountNumber { get; set; }
         public decimal AccountBalance { get; set; }
+
+        public void Withdraw(decimal amount)
+        {
+            if (amount > AccountBalance) 
+                throw new ArgumentException("The input amount is greater than balance.");
+            AccountBalance -= amount;            
+        }
+        public void Deposit(decimal amount)
+        {
+            if (amount > MAX_INPUT_AMOUNT) 
+                throw new ArgumentException("The input amount is greater than maximum allowed.");
+            AccountBalance += amount;            
+        }
     }
 }
 ```
@@ -256,8 +270,6 @@ namespace CommandDesignPattern
 8. Ahora se debe implementar cada una de clases correspondiente a los comandos de Retirar y Depositar para eso se deberan crear los siguientes archivos con el còdigo correspondiente:
 > WithdrawCommand.cs
 ```C#
-using System;
-
 namespace ATM.Domain
 {
     public class WithdrawCommand : ICommand
@@ -271,17 +283,13 @@ namespace ATM.Domain
         }
         public void Execute()
         {
-            if (_amount > _account.AccountBalance) 
-                throw new ArgumentException("The input amount is greater than balance.");
-            _account.AccountBalance -= _amount;
+            _account.Withdraw(_amount);
         }
     }
 }
 ```
 > DepositCommand.cs
 ```C#
-using System;
-
 namespace ATM.Domain
 {
     public class DepositCommand : ICommand
@@ -295,9 +303,7 @@ namespace ATM.Domain
         }
         public void Execute()
         {
-            if (_amount > Account.MAX_INPUT_AMOUNT) 
-                throw new ArgumentException("The input amount is greater than maximum allowed.");
-            _account.AccountBalance += _amount;
+            _account.Deposit(_amount);
         }        
     }
 }
@@ -325,7 +331,6 @@ namespace ATM.Domain
 9. Para probar esta implementación, crear el archivo ATMTests.cs en el proyecto ATM.Domain.Tests:
 ```C#
 using NUnit.Framework;
-
 namespace ATM.Domain.Tests
 {
     public class ATMTests
@@ -361,52 +366,16 @@ Correctas! - Con error:     0, Superado:     2, Omitido:     0, Total:     2, Du
 ```
 11. Entonces ¿cuál es problema con este diseño? Funciona.... pero el problema es que ahora existen muchos sub sistemas como Validador, Acceso a Datos y Servicio de Email y el cliente que las utilice necesita seguir la secuencia apropiada para crear y consumir los objetos de los subsistemas. Existe una posibilidad que el cliente no siga esta secuencia apropiada o que olvide incluir o utilizar alguno de estos sub sistemas. Entonces si en vez de darle acceso a los sub sistemas, se crea una sola interfaz y se le brinda acceso al cliente para realizar el registo, asi la lógica compleja se traslada a esta interfaz sencilla. Para esto se utilizará el patrón FACHADA el cual escondera toda la complejidad y brindará un solo metodo cimple de usar al cliente.
 
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/a9cb73bb-c996-4e9a-bf4c-f665f1957119)
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/50ecff5e-dc02-4b54-980f-8b72546b4129)
 
-12. Para lo cual proceder a crear el archivo CustomerRegistration.cs en el proyecto CustomerApp.Domain, con el siguiente contenido:
-```C#
-using CustomerApp.Domain;
+Como se puede apreciar la imagen, el patron de diseño Comando consiste de 5 componentes:
 
-public class CustomerRegistration
-{
-    public bool RegisterCustomer(Customer customer)
-    {
-        //Step1: Validate the Customer
-        Validator validator = new Validator();
-        bool IsValid = validator.ValidateCustomer(customer);
-        //Step1: Save the Customer Object into the database
-        DataAccessLayer customerDataAccessLayer = new DataAccessLayer();
-        bool IsSaved = customerDataAccessLayer.SaveCustomer(customer);
-        //Step3: Send the Registration Email to the Customer
-        EmailService email = new EmailService();
-        email.SendRegistrationEmail(customer);
-        return true;
-    }
-}
-```
-8. Finalmente adciionar un nuevo método de prueba en la clase CustomerTests para comprobar el funcionamiento de la nueva clase creada:
-```C#
-        [Test]
-        public void GivenANewCustomer_WhenRegister_ThenIsRegisteredSuccessfully()
-        {
-            //Step1: Create an Instance of Customer Class
-            Customer customer = Customer.Create(
-                "Jose Cuadros","p.cuadros@gmail.com","1234567890","Tacnamandapio","str0ng.pa55");
-            //Step2: Using Facade Class
-            bool IsRegistered = new CustomerRegistration().RegisterCustomer(customer);
-            Assert.IsNotNull(customer);
-            Assert.IsTrue(IsRegistered);
-        }     
-```
-9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar el comando:
-```Bash
-dotnet test --collect:"XPlat Code Coverage"
-```
-10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
-```Bash
-Passed!  - Failed:     0, Passed:     2, Skipped:     0, Total:     2, Duration: 11 ms 
-```
+Receiver: This is a class that contains the actual implementation of the method that the client wants to call. In our example, it is the Open, Save, and Close method of the Document class.
+Command: This is going to be an interface that specifies the Execute operation. In our example, it is the ICommand interface that has only one method i.e. Execute.
+ConcreteCommand: These are going to be classes that implement the ICommand interface and provide implementations for the Execute operation. As part of the Execute method, it is going to invoke operation(s) on the Receiver object. In our example, it is the OpenCommand, SaveCommand, and CloseCommand classes.
+Invoker: The Invoker is going to be a class and asks the command to carry out the action. In our example, it is the MenuOptions class.
+Client: This is the class that creates and executes the command object. In our example, it is the Main method of the Program class.
 
 ---
 ## Actividades Encargadas
-1. Crear un nuevo proyecto de dominio y su respectivo proyecto de pruebas utilizando otro patrón de diseño ESTRUCTURAL.
+1. Crear un nuevo proyecto de dominio y su respectivo proyecto de pruebas utilizando otro patrón de diseño de COMPOARTAMIENTO.
