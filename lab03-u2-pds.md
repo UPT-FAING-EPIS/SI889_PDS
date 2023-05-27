@@ -205,7 +205,7 @@ c. Conexto: esta es la clase que mantiene la referencia al objeto Estrategia y l
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/e132b3dd-1b5d-4cdf-a91d-fe114071c4bb)
 
 
-### PARTE II: Facade Design Pattern
+### PARTE II: Command Design Pattern
 
 ![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/ece5c02f-fe5e-4125-91f4-7479f6c3d746)
 
@@ -213,19 +213,19 @@ c. Conexto: esta es la clase que mantiene la referencia al objeto Estrategia y l
 1. Iniciar una nueva instancia de la aplicación Powershell o Windows Terminal en modo administrador 
 2. Ejecutar el siguiente comando para crear una nueva solución
 ```
-dotnet new sln -o CustomerApp
+dotnet new sln -o ATM
 ```
 3. Acceder a la solución creada y ejecutar el siguiente comando para crear una nueva libreria de clases y adicionarla a la solución actual.
 ```
 cd CustomerApp
-dotnet new classlib -o CustomerApp.Domain
-dotnet sln add ./CustomerApp.Domain/CustomerApp.Domain.csproj
+dotnet new classlib -o ATM.Domain
+dotnet sln add ./ATM.Domain/ATM.Domain.csproj
 ```
 4. Ejecutar el siguiente comando para crear un nuevo proyecto de pruebas y adicionarla a la solución actual
 ```
-dotnet new nunit -o CustomerApp.Domain.Tests
-dotnet sln add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj
-dotnet add ./CustomerApp.Domain.Tests/CustomerApp.Domain.Tests.csproj reference ./CustomerApp.Domain/CustomerApp.Domain.csproj
+dotnet new nunit -o ATM.Domain.Tests
+dotnet sln add ./ATM.Domain.Tests/ATM.Domain.Tests.csproj
+dotnet add ./ATM.Domain.Tests/ATM.Domain.Tests.csproj reference ./ATM.Domain/ATM.Domain.csproj
 ```
 5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto CustomerApp.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
