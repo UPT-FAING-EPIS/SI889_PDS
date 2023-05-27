@@ -370,7 +370,7 @@ Como se puede apreciar la imagen, el patron de diseño Comando consiste de 5 com
 Receiver: Es la clase que contiene la actual implementacionde los metods que el cliente quiere invocar. En este ejemplo la cuenta.
 Command: Esta viene a ser la interfaz que espeficica la operacion Ejecutar.
 ConcreteCommand: Con las clases que implementa la interfaz ICommand y proporcionan las implementaciones del metodo Ejecutar. 
-Invoker: El Invocadro viene a ser la clase que resuelve que Command realiza determinada accion. En este caso el ATM
+Invoker: El Invocador viene a ser la clase que resuelve que Command realiza determinada acción. En este caso la clase ATM.
 Client: Es la clase que crea y ejecuta el comando.
 
 ---
