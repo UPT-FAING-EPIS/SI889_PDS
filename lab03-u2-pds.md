@@ -314,7 +314,7 @@ namespace ATM.Domain
         {
             _command = command;
         }
-        public void ExecuteTask()
+        public void Action()
         {
             _command.Execute();
         }
@@ -336,7 +336,7 @@ namespace ATM.Domain.Tests
             var account = new Account() { AccountBalance = 300 };
             decimal amount = 100;
             var withdraw = new WithdrawCommand(account, amount);
-            new ATM(withdraw).ExecuteTask();
+            new ATM(withdraw).Action();
             Assert.IsTrue(account.AccountBalance.Equals(200));
         }
         [Test]
@@ -345,7 +345,7 @@ namespace ATM.Domain.Tests
             var account = new Account() { AccountBalance = 200 };
             decimal amount = 100;
             var deposit = new DepositCommand(account, amount);
-            new ATM(deposit).ExecuteTask();
+            new ATM(deposit).Action();
             Assert.IsTrue(account.AccountBalance.Equals(300));
         }
     }
