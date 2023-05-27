@@ -227,25 +227,17 @@ dotnet new nunit -o ATM.Domain.Tests
 dotnet sln add ./ATM.Domain.Tests/ATM.Domain.Tests.csproj
 dotnet add ./ATM.Domain.Tests/ATM.Domain.Tests.csproj reference ./ATM.Domain/ATM.Domain.csproj
 ```
-5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto CustomerApp.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
+5. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. En el proyecto ATM.Domain, si existe un archivo Class1.cs proceder a eliminarlo. Asimismo en el proyecto Bank.Domain.Tests si existiese un archivo UnitTest1.cs, también proceder a eliminarlo.
 
-6. Primero se necesita implementar la entidad Cliente, para esto crear el archivo Customer.cs en el proyecto CustomerApp.Domain con el siguiente código:
+6. Primero se necesita implementar la interfaz principal para la generación de comandos, para esto crear el archivo ICommand.cs en el proyecto ATM.Domain con el siguiente código:
 ```C#
-namespace CustomerApp.Domain
+namespace CommandDesignPattern
 {
-    public class Customer
+    // Command Interface
+    // It declares a method for executing a command
+    public interface ICommand
     {
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string MobileNumber { get; set; }
-        public string Address { get; set; }
-        public string Password { get; set; }
-        public static Customer Create(string name, string email, string mobileNumber, string address, string password)
-        {
-            return new Customer() {
-                Name = name, Email = email, MobileNumber = mobileNumber, Address = address, Password = password
-            };
-        }
+        void Execute();
     }
 }
 ```
