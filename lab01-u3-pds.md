@@ -1,7 +1,7 @@
 # SESION DE LABORATORIO N° 01: MODELO VISTA VISTA-MODELO (MVVM)
 
 ## OBJETIVOS
-  * Comprender el funcionamiento del patròn Modelo Vista Vista-Modelo.
+  * Comprender el funcionamiento del patrón de presentación Modelo Vista Vista-Modelo.
 
 ## REQUERIMIENTOS
   * Conocimientos: 
@@ -40,7 +40,7 @@ cd ClientUI
 
 ### PARTE II: Creación del modelo
 
-1. En VS Code, en el proyecto crear una carpeta models y proceder a crear el archivo ClientDto.cs e introducir el siguiente código:
+5. En VS Code, en el proyecto ClientUI crear una carpeta `models` y proceder a crear el archivo ClientDto.cs que funcionara como Modelo base para el traslado de datos e introducir el siguiente código:
 ```C#
 namespace ClientUI.models
 {
@@ -51,104 +51,221 @@ namespace ClientUI.models
     }
 }
 ```
-7. En el proyecto Bank.Domain proceder a crear las implementaciones de a interfaz creada en el paso previo para eso añadimos los archivos:
-> MoneyBack.cs
-```C#
-namespace Bank.Domain
-{
-    public class MoneyBack : ICreditCard
-    {
-        public string GetCardType()
-        {
-            return "MoneyBack";
-        }
-        public int GetCreditLimit()
-        {
-            return 15000;
-        }
-        public int GetAnnualCharge()
-        {
-            return 500;
-        }
-    }
-}
-```
-> Platinum.cs
-```C#
-namespace Bank.Domain
-{
-    public class Platinum : ICreditCard
-    {
-        public string GetCardType()
-        {
-            return "Platinum Plus";
-        }
-        public int GetCreditLimit()
-        {
-            return 35000;
-        }
-        public int GetAnnualCharge()
-        {
-            return 2000;
-        }
-    }
-}
-```
-> Titanium.cs
-```C#
-namespace Bank.Domain
-{
-    public class Titanium : ICreditCard
-    {
-        public string GetCardType()
-        {
-            return "Titanium Edge";
-        }
-        public int GetCreditLimit()
-        {
-            return 25000;
-        }
-        public int GetAnnualCharge()
-        {
-            return 1500;
-        }
-    }
-}
-```
-8. Luego en el proyecto Bank.Domain.Tests añadir un nuevo archivo CreditCardTests.cs e introducir el siguiente código:
-```C#
-using Bank.Domain;
-using NUnit.Framework;
 
-namespace Bank.Domain.Tests
-{
-    public class CreditCardTests
-    {
-        [Test]
-        public void GivenCreditTypeSelected_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            string cardType = "MoneyBack";
-            ICreditCard? cardDetails = null;
-            if (cardType == "MoneyBack")
-            {
-                cardDetails = new MoneyBack();
-            }
-            else if (cardType == "Titanium")
-            {
-                cardDetails = new Titanium();
-            }
-            else if (cardType == "Platinum")
-            {
-                cardDetails = new Platinum();
-            }
+### PARTE III: Creación de la Vista-Modelo
 
-            Assert.IsNotNull(cardDetails);
-            Assert.IsNotEmpty(cardDetails.GetCardType());
-            Assert.GreaterOrEqual(cardDetails.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(cardDetails.GetAnnualCharge(), 0);
+6. En el proyecto ClientUI crear una carpeta `viewmodels` y proceder a crear dentro de este los siguientes archivos y contenido:
+> ViewModelBase.cs : Vista-Modelo base que implementa la interfaz INotifyPropertyChanged, que utiliza el patron Observador y permite que los controles de la interfaz se suscriban a las propiedades de las vista modelos para el control de la lógica de presentación.
+```C#
+using System;
+using System.ComponentModel;
+namespace ClientUI.viewmodels
+{
+    public class ViewModelBase : INotifyPropertyChanged, IDisposable
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        public virtual void Dispose() { }
+    }
+}
+```
+> RelayCommand.cs : Clase que funcionara como delegada, permitiendo asociar propiedades o en esta caso comando a determinados metodos para permitir ejecutar acciones pertenecientes a la lógica de presentación
+```C#
+using System;
+using System.Windows.Input;
+
+namespace ClientUI.viewmodels
+{
+    public class RelayCommand : ICommand
+    {
+        private readonly Predicate<object> _canExecute;
+        private readonly Action<object> _execute;
+
+        public RelayCommand(Predicate<object> canExecute, Action<object> execute)
+        {
+            _canExecute = canExecute;
+            _execute = execute;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute(parameter);
+        }
+
+        public void Execute(object parameter)
+        {
+            _execute(parameter);
         }
     }
 }
+```
+> ClientViewModel.cs: Vista-Modelo que se asociara a la interfaz grafica de la ventana de mantenimiento del cliente.
+```C#
+using System.Collections.ObjectModel;
+using ClientUI.models;
+
+namespace ClientUI.viewmodels
+{
+    public class ClientViewModel : ViewModelBase
+    {
+        public ClientViewModel()
+        {
+            Clients = new ObservableCollection<ClientDto>() {
+                new ClientDto() { FirstName = "Miles", LastName = "Morales" },
+                new ClientDto() { FirstName = "Peter", LastName = "Parker" },
+                new ClientDto() { FirstName = "Miguel", LastName = "Ojara" }
+            };
+        }
+        
+        public ObservableCollection<ClientDto> Clients {get; set;}
+        private ClientDto _s_client;
+        public ClientDto Client
+        {
+            get { return _s_client; }
+            set { 
+                    if (value!=null)
+                    {
+                        _s_client = value; 
+                        OnPropertyChanged(); 
+                    }
+                }
+        }
+        
+        private RelayCommand? _cmdNew;
+        public RelayCommand NewCommand { 
+            get {
+                _cmdNew ??= new RelayCommand(
+                    p => true,
+                    p => NewClient());
+                return _cmdNew;
+            }
+        }
+        private void NewClient()
+        {
+            var _new = new ClientDto() {FirstName = "", LastName=""};
+            Clients.Add(_new);
+            Client = _new;
+        }
+        private RelayCommand? _cmdUpdate;
+        public RelayCommand UpdateCommand { 
+            get {
+                _cmdUpdate ??= new RelayCommand(
+                    p => true,
+                    p => UpdateClient());
+                return _cmdUpdate;
+            }
+        }
+        private void UpdateClient()
+        {
+            // aqui se debe llamar al servicio de actualizacion a la BD
+            System.Windows.MessageBox.Show("Client Saved", "Client Admin");
+        }      
+
+        private RelayCommand? _cmdDelete;
+        public RelayCommand DeleteCommand { 
+            get {
+                _cmdDelete ??= new RelayCommand(
+                    p => true,
+                    p => DeleteClient());
+                return _cmdDelete;
+            }
+        }
+        private void DeleteClient()
+        {
+            Clients.Remove(Client);
+        }                
+    }
+}
+```
+
+### PARTE IV: Creación de la Vista
+
+7. En el proyecto ClientUI crear una carpeta `views` y proceder a crear dentro de este los siguientes archivos y contenido:
+> ClientWindow.xaml
+```XAML
+<Window x:Class="ClientUI.views.ClientWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClientUI.views"
+        xmlns:vm="clr-namespace:ClientUI.viewmodels"
+        mc:Ignorable="d"
+        Title="Mantenimiento de Clientes" Width="600" Height="300">
+
+    <Grid ShowGridLines="True">
+        <Grid.Resources>
+            <vm:ClientViewModel x:Key="clientViewModel"/>
+        </Grid.Resources>        
+
+        <Grid.DataContext>
+            <Binding Source="{StaticResource clientViewModel}"/>
+        </Grid.DataContext>
+
+        <Grid.RowDefinitions>  
+            <RowDefinition Height="2*"/>  
+            <RowDefinition Height="Auto"/>  
+            <RowDefinition Height="*"/>  
+            <RowDefinition Height="4*"/>  
+            <RowDefinition Height="2*"/>  
+        </Grid.RowDefinitions>
+        <Label Content="Mantenimiento de Clientes" HorizontalAlignment="Center" VerticalAlignment="Center" />  
+        <Grid ShowGridLines="True" Row="1">
+            <Grid.RowDefinitions>  
+                <RowDefinition Height="Auto"/>  
+                <RowDefinition Height="*"/>  
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>  
+                <ColumnDefinition Width="Auto"/>  
+                <ColumnDefinition Width="*"/>  
+                <ColumnDefinition Width="Auto"/>  
+                <ColumnDefinition Width="2*"/>  
+            </Grid.ColumnDefinitions>
+            <Label Content="Nombres" Grid.Row="0" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" />  
+            <Label Content="Apellidos" Grid.Row="1" 
+                HorizontalAlignment="Left" VerticalAlignment="Top" />  
+            <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" 
+                Name="txtFirstName" VerticalAlignment="Stretch" Margin="5"
+                Text="{Binding ElementName=UserGrid,Path=SelectedItem.FirstName}" />  
+            <TextBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" 
+                Name="txtLastName" VerticalAlignment="Stretch" Margin="5"
+                Text="{Binding ElementName=UserGrid,Path=SelectedItem.LastName}" />  
+            <Button Content="Nuevo" Grid.Row="0" Grid.Column="2" 
+                HorizontalAlignment="Left" Name="btnNew"   
+                VerticalAlignment="Top"
+                Command="{Binding Path=NewCommand}"  />  
+            <Button Content="Guardar" Grid.Row="1" Grid.Column="2" 
+                HorizontalAlignment="Left" Name="btnUpdate"   
+                VerticalAlignment="Top"
+                Command="{Binding Path=UpdateCommand}"  />  
+            <Button Content="Eliminar" Grid.Row="1" Grid.Column="3" 
+                HorizontalAlignment="Left" Name="btnDelete"   
+                VerticalAlignment="Top"
+                Command="{Binding Path=DeleteCommand}"  />  
+        </Grid>
+        <ListView Name="UserGrid" Grid.Row="3" 
+            ItemsSource="{Binding Clients}" SelectedItem="{Binding Client}"  >  
+            <ListView.View>  
+                <GridView x:Name="grdTest">  
+                    <GridViewColumn Header="Nombres" 
+                        DisplayMemberBinding="{Binding FirstName}" Width="80" />  
+                    <GridViewColumn Header="Apellidos" 
+                        DisplayMemberBinding="{Binding LastName}" Width="100" />  
+                </GridView>  
+            </ListView.View>  
+        </ListView>  
+    </Grid>
+</Window>
 ```
 9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
 ```Bash
