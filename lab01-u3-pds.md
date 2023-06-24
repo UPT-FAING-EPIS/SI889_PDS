@@ -25,7 +25,9 @@
 
 ### PARTE I: Creción del proyecto
 
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/f810f99d-efe2-4ec8-a04c-83dee3872787)
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bdfc8fbb-e2a8-408b-83a4-b72dc7ccc82f)
+
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/203c2e9c-de6b-4291-9530-034fed11aca2)
 
 1. Iniciar la aplicación Powershell o Windows Terminal en modo administrador 
 2. Ejecutar el siguiente comando para crear una nueva aplicación WPF.
@@ -36,11 +38,23 @@ dotnet new wpf -o ClientUI
 ```
 cd ClientUI
 ```
-4. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto. 
+4. Iniciar Visual Studio Code (VS Code) abriendo el folder de la solución como proyecto.
+5. Modificar el archivo App.xaml, en la propiedad StartupUri, colocar "views/ClientWindow.xaml".
+```XAML
+<Application x:Class="ClientUI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ClientUI"
+             StartupUri="views/ClientWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>
+```
 
 ### PARTE II: Creación del modelo
 
-5. En VS Code, en el proyecto ClientUI crear una carpeta `models` y proceder a crear el archivo ClientDto.cs que funcionara como Modelo base para el traslado de datos e introducir el siguiente código:
+6. En VS Code, en el proyecto ClientUI crear una carpeta `models` y proceder a crear el archivo ClientDto.cs que funcionara como Modelo base para el traslado de datos e introducir el siguiente código:
 ```C#
 namespace ClientUI.models
 {
@@ -54,7 +68,7 @@ namespace ClientUI.models
 
 ### PARTE III: Creación de la Vista-Modelo
 
-6. En el proyecto ClientUI crear una carpeta `viewmodels` y proceder a crear dentro de este los siguientes archivos y contenido:
+7. En el proyecto ClientUI crear una carpeta `viewmodels` y proceder a crear dentro de este los siguientes archivos y contenido:
 > ViewModelBase.cs : Vista-Modelo base que implementa la interfaz INotifyPropertyChanged, que utiliza el patron Observador y permite que los controles de la interfaz se suscriban a las propiedades de las vista modelos para el control de la lógica de presentación.
 ```C#
 using System;
@@ -189,8 +203,8 @@ namespace ClientUI.viewmodels
 
 ### PARTE IV: Creación de la Vista
 
-7. En el proyecto ClientUI crear una carpeta `views` y proceder a crear dentro de este los siguientes archivos y contenido:
-> ClientWindow.xaml
+8. En el proyecto ClientUI crear una carpeta `views` y proceder a crear dentro de este los siguientes archivos y contenido:
+> ClientWindow.xaml : Vista en còdigo xaml de la ventana de mantenimiento de clientes.
 ```XAML
 <Window x:Class="ClientUI.views.ClientWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -267,172 +281,45 @@ namespace ClientUI.viewmodels
     </Grid>
 </Window>
 ```
-9. Ahora necesitamos comprobar las pruebas contruidas para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
+> ClientWindow.xaml.cs: clase asociada de manera nativa a los archivos de extension xaml.
+```C#
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace ClientUI.views
+{
+    /// <summary>
+    /// Interaction logic for ClientWindow.xaml
+    /// </summary>
+    public partial class ClientWindow : Window
+    {
+        public ClientWindow()
+        {
+            InitializeComponent();
+        }
+    }
+}
+```
+9. Ahora se requiere comprobar la aplicación para eso abrir un terminal en VS Code (CTRL + Ñ) o vuelva al terminal anteriormente abierto, y ejecutar los comandos:
 ```Bash
-dotnet test --collect:"XPlat Code Coverage"
+dotnet run
 ```
-10. Si las pruebas se ejecutaron correctamente debera aparcer un resultado similar al siguiente:
-```Bash
-Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 5 ms
-```
-11. Funciona pero ¿es correcta la implementación del código? ¿Qué problemas tiene esta implementación?
-* Primero tenemos un problema de Alto Acoplamiento entre la clase de prueba y las clases productos (MoneyBack, Titanium y Platinum). Asi que cuando hay un cambio en una d elas clases todas las demàs deberan ser cambiadas.
-* Segundo, si se adiciona un nuevo tipo de tarjeta de crédito, necesitamos hacer cambios en la lògica de creación que se encuentra en el metod de prueba, adicionando una nueva condición IF-ELSE lo cual no solo complica el desarrollo, sino también el proceso pruebas.
-  
-12. Para solucionar los problemas anteriores mencionados utilizaremos el patrón de diseño FABRICA, para lo cual ahora en el proyecto Bank.Domain proceder a agregar el archivo CreditCarFactory.cs con el siguiente código:
-```C#
-namespace Bank.Domain
-{
-    public class CreditCardFactory
-    {
-        public static ICreditCard GetCreditCard(string cardType)
-        {
-            ICreditCard? cardDetails = null;
-            if (cardType == "MoneyBack")
-            {
-                cardDetails = new MoneyBack();
-            }
-            else if (cardType == "Titanium")
-            {
-                cardDetails = new Titanium();
-            }
-            else if (cardType == "Platinum")
-            {
-                cardDetails = new Platinum();
-            }
-            return cardDetails; 
-        }
-    }
-}
-```
-13. Adicionalmente modificar la clase de pruebas CreditCardTests, con el siguiente código:
-```C#
-using Bank.Domain;
-using NUnit.Framework;
+10. Si se ejecuta correctamente debería mostrar la siguiente ventana:
 
-namespace Bank.Domain.Tests
-{
-    public class CreditCardTests
-    {
-        [Test]
-        public void GivenCreditTypeSelected_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            string cardType = "MoneyBack";
-            ICreditCard? cardDetails = CreditCardFactory.GetCreditCard(cardType);
-            Assert.IsNotNull(cardDetails);
-            Assert.IsNotEmpty(cardDetails.GetCardType());
-            Assert.GreaterOrEqual(cardDetails.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(cardDetails.GetAnnualCharge(), 0);
-        }
-    }
-}
-```
-14. Al ejecutar nuevamente el paso 9 deberia seguir funcionando correctamente.
-
-15. Con esto se aplicado el patrón de diseño FABRICA de la siguiente manera:
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bae74678-32e7-454f-96dc-bf4f357c676c)
-
-> Pero con este patrón se ha solucionado parcialmente los problemas indicados en el punto 11, en especifico solo se ha reducido en cierto porcentaje el Alto Acoplamiento.
-https://dotnettutorials.net/lesson/factory-method-design-pattern-csharp/
-
-### PARTE II: Factory Method Design Pattern
-
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/09109954-6f0f-4db3-8449-c82b4abcfa4d)
-
-1. Utilizando el proyecto de la primera parte proceder a crear el archivo CreditCardAbstractMethod.cs en el proyecto Bank.Domain
-
-```C#
-namespace Bank.Domain
-{
-    public abstract class CreditCardFactoryMethod
-    {
-        protected abstract ICreditCard MakeProduct();
-        // Also note that The Creator's primary responsibility is not creating products. 
-        // Usually, it contains some core business logic that relies on Product objects, returned by the factory method. 
-        public ICreditCard CreateProduct()
-        {
-            //Call the MakeProduct which will create and return the appropriate object 
-            ICreditCard creditCard = this.MakeProduct();
-            //Return the Object to the Client
-            return creditCard;
-        }
-    }
-}
-```
-2. Ahora proceder a crear las implementaciones de la clase abstracta anterior para cada producto, crear los siguientes archivos en el proyecto Bank.Domain:
-> MoneyBackFactoryMethod.cs
-```C#
-namespace Bank.Domain
-{
-    public class MoneyBackFactoryMethod : CreditCardFactoryMethod
-    {
-        protected override ICreditCard MakeProduct()
-        {
-            ICreditCard product = new MoneyBack();
-            return product;
-        }
-    }
-}
-```
-> PlatinumFactoryMethod.cs
-```C#
-namespace Bank.Domain
-{
-    public class PlatinumFactoryMethod: CreditCardFactoryMethod
-    {
-        protected override ICreditCard MakeProduct()
-        {
-            ICreditCard product = new Platinum();
-            return product;
-        }
-    }
-}
-```
-> TitaniumFactoryMethod.cs
-```C#
-namespace Bank.Domain
-{
-    public class TitaniumFactoryMethod : CreditCardFactoryMethod
-    {
-        protected override ICreditCard MakeProduct()
-        {
-            ICreditCard product = new Titanium();
-            return product;
-        }
-    }
-}
-```
-3. Para probar esta implementacón, modificar la clase de pruebas CreditCardTests y adicionar los siguientes métodos:
-```C#
-        [Test]
-        public void GivenCreditTypePlatinumChoosen_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            ICreditCard creditCard = new PlatinumFactoryMethod().CreateProduct();
-            Assert.IsNotNull(creditCard);
-            Assert.IsNotEmpty(creditCard.GetCardType());
-            Assert.GreaterOrEqual(creditCard.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(creditCard.GetAnnualCharge(), 0);
-        }
-
-        [Test]
-        public void GivenCreditTypeTitaniumChoosen_WhenRequestCreditCard_ThenNewValidCreditCard()
-        {
-            ICreditCard creditCard = new TitaniumFactoryMethod().CreateProduct();
-            Assert.IsNotNull(creditCard);
-            Assert.IsNotEmpty(creditCard.GetCardType());
-            Assert.AreEqual(creditCard.GetCardType(),"Titanium Edge");
-            Assert.GreaterOrEqual(creditCard.GetCreditLimit(), 0);
-            Assert.GreaterOrEqual(creditCard.GetAnnualCharge(), 0);
-        }
-```
-4. Ejecutar nuevamente el paso 9 (Parte I) para lo cual se obtendra una respuesta similar a la siguiente:
-```Bash
-Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 9 ms
-```
-5. Finalmente podemos confirmar con este patròn un desacoplamiento de la clase que lo ejecuta, asimismo la reglas de creación ya no dependen de las clausula IF-ELSE, por lo que para crear un nuevo tipo de tarjeta solo será necesario crear una nueva clase basada en la clase abstracta de CreditCardFactoryMethod:
-
-![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/bbad4ef3-4f18-4db3-85c0-c7f4f28e5ef0)
+![image](https://github.com/UPT-FAING-EPIS/SI889_PDS/assets/10199939/cb8c8100-78cf-49e9-b1aa-d6332edabef5)
 
 ---
 ## Actividades Encargadas
-1. Crear un nuevo proyecto de dominio y su respectivo proyecto de pruebas utilizando otro patrón de diseño CREACIONAL.
+1. Crear una nueva ventana de mantenimiento de Direcciones del cliente que se asociace a la ventana de mantenimiento del Cliente.
